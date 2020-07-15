@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using WhatsappMonitor.API.Context;
 
 namespace WhatsappMonitor.API
 {
@@ -26,6 +27,7 @@ namespace WhatsappMonitor.API
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            services.AddDbContext<MyDbContext>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

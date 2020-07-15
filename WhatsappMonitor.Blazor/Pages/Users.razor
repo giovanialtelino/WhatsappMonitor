@@ -1,0 +1,89 @@
+@page "/users"
+
+@inject NavigationManager NavigationManager
+@inject Services.ApiService apiServices
+@using WhatsappMonitor.Shared.Models
+
+<h2>Users</h2>
+
+<form>
+    <div class="form-group">
+        <input class="form-control" type="text" placeholder="Name" @bind="newUser">
+    </div>
+    <div class="form-group">
+        <button class="btn btn-primary" @onclick="AddUser">Add User</button>
+    </div>
+</form>
+
+<br>
+
+@if (users == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+   <ul class="list-group">
+    @foreach (var i in users)
+    {
+        <li class="list-group-item">
+            <form>
+                <div class="form-group">
+    <input class="form-control" type="text" @bind="i.Name"></div>
+    <div class="form-group">
+    <button type="button" class="btn btn-secondary" @onclick="(() => EditUser(i.Id))" >Edit</button>
+    <button type="button" class="btn btn-danger" @onclick="(() => DeleteUser(i.Id))">Delete</button>
+    <button type="button" class="btn btn-success" @onclick="(() => UserInfoPage(i))">Information</button>
+    </div>
+    </form>
+    
+        </li>
+    }
+</ul>
+}
+
+
+@code {
+    private List<User> users;
+    private string newUser;
+    protected override async Task OnInitializedAsync()
+    {
+        await GetUsers();
+    }
+
+    private async Task GetUsers()
+    {
+
+        users = await apiServices.GetUsersAsync();
+    }
+
+    private async Task AddUser()
+    {
+        if (!string.IsNullOrWhiteSpace(newUser))
+        {
+            await apiServices.AddUser(newUser);
+            await GetUsers();
+        }
+    }
+
+    private async Task EditUser(int i)
+    {
+        var selectedUser = users.First(p => p.Id == i);
+        if (!string.IsNullOrWhiteSpace(selectedUser.Name))
+        {
+            await apiServices.EditUser(selectedUser);
+            await GetUsers();
+        }
+    }
+
+    private async Task DeleteUser(int i)
+    {
+        await apiServices.DeleteUserById(i);
+        await GetUsers();
+    }
+
+    private void UserInfoPage(User user)
+    {
+        NavigationManager.NavigateTo(String.Concat("/user/", user.Name));
+    }
+}

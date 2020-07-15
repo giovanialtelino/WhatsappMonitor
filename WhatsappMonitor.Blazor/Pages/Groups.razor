@@ -1,0 +1,87 @@
+@page "/groups"
+
+@inject NavigationManager NavigationManager
+@inject Services.ApiService apiServices
+@using WhatsappMonitor.Shared.Models
+
+<h2>Groups</h2>
+
+<form>
+    <div class="form-group">
+        <input class="form-control" type="text" placeholder="Name" @bind="newGroup">
+    </div>
+    <div class="form-group">
+        <button class="btn btn-primary" @onclick="AddGroup">Add User</button>
+    </div>
+</form>
+
+<br>
+
+@if(groups == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <ul class="list-group">
+    @foreach (var i in groups)
+    {
+        <li class="list-group-item">
+            <form>
+                <div class="form-group">
+<input class="form-control" type="text" @bind="i.Name">
+                </div>
+                <div class="form-group">
+<button type="button" class="btn btn-secondary" @onclick="(() => EditGroup(i.Id))" >Edit</button>
+    <button type="button" class="btn btn-danger" @onclick="(() => DeleteGroup(i.Id))">Delete</button>
+    <button type="button" class="btn btn-success" @onclick="(() => GroupInfoPage(i))">Information</button>
+                </div>
+    
+    
+            </form>    
+        </li>
+    }
+</ul>
+}
+
+@code{
+    private List<Group> groups;
+    private string newGroup;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetGroups();
+    }
+
+    private async Task GetGroups()
+    {
+        groups = await apiServices.GetGroupsAsync();
+    }
+
+    private async Task AddGroup()
+    {
+        if (!string.IsNullOrWhiteSpace(newGroup))
+        {
+            await apiServices.AddGroup(newGroup);
+            await GetGroups();
+        }
+    }
+
+    private async Task EditGroup(int i)
+    {
+        var selectedGroup = groups.First(g => g.Id == i);
+        await apiServices.EditGroup(selectedGroup);
+        await GetGroups();
+    }
+
+    private async Task DeleteGroup(int i)
+    {
+        await apiServices.DeleteGroupById(i);
+        await GetGroups();
+    }
+
+    private void GroupInfoPage(Group group)
+    {
+        NavigationManager.NavigateTo(String.Concat("/group/", group.Name));
+    }
+}

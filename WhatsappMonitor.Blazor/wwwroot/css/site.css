@@ -47,7 +47,7 @@ app {
 }
 
 .sidebar {
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+    background-image: linear-gradient(180deg, rgb(9, 71, 3) 0%, #63f0ae 70%);
 }
 
     .sidebar .top-row {
@@ -180,4 +180,13 @@ app {
         /* Never collapse the sidebar for wide screens */
         display: block;
     }
+}
+
+.components-reconnect-show, .components-reconnect-failed, .components-reconnect-rejected {
+    display: none;
+}
+
+#components-reconnect-modal
+{
+    z-index: 10000 !important;
 }

@@ -1,0 +1,14 @@
+@page "/user/{user}"
+
+
+<h2>@User page</h2>
+
+
+@code{
+    [Parameter]
+    public String User {get;set;}
+
+    protected override void OnInitialized(){
+        User = User;
+    }
+}
