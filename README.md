@@ -1,3 +1,6 @@
 # WhatsappMonitor
 
 ## TODO
+;sudo docker run --rm -P -p 127.0.0.1:5433:5432 -e POSTGRES_PASSWORD="1234" --name pg postgres:alpine
+
+psql postgresql://postgres:1234@localhost:5433/postgres

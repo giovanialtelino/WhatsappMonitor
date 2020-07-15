@@ -61,7 +61,7 @@ else
     {
         if (!string.IsNullOrWhiteSpace(newUser))
         {
-            await apiServices.AddUser(newUser);
+             await apiServices.AddUser(newUser);
             await GetUsers();
         }
     }
@@ -78,8 +78,8 @@ else
 
     private async Task DeleteUser(int i)
     {
-        await apiServices.DeleteUserById(i);
-        await GetUsers();
+         await apiServices.DeleteUserById(i);
+         await GetUsers();
     }
 
     private void UserInfoPage(User user)

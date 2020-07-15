@@ -22,44 +22,34 @@ namespace WhatsappMonitor.API.Controllers
         }
 
         [HttpGet]
-        public ActionResult<List<Group>> GetAllGroups()
+        public async Task<ActionResult<List<Group>>> GetAllGroups()
         {
-
+            return await _repo.GetAllGroupsAsync();
         }
 
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<Group> GetGroupById(int id)
+        public async Task<ActionResult<Group>> GetGroupById(int id)
         {
-            var group = groups.FirstOrDefault(u => u.Id == id);
-            if (group == null) return NotFound();
-            return group;
+            return await _repo.GetGroupById(id);
         }
 
         [HttpPost]
-        public void AddGroup([FromBody] Group group)
+        public async Task AddGroup([FromBody] Group group)
         {
-            var newGroup = new Group
-            {
-                Name = group.Name,
-                Id = newId(),
-                CreationDate = DateTime.Now
-            };
-            groups.Add(newGroup);
+            await _repo.AddGroup(group);
         }
 
         [HttpPut("{id}")]
-        public void EditGroup(int id, [FromBody] Group user)
+        public async Task EditGroup(int id, [FromBody] Group group)
         {
-            int i = groups.FindIndex(p => p.Id == id);
-            if (i != -1) groups[i] = user;
+            await _repo.UpdateGroup(id, group);
         }
 
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public async Task Delete(int id)
         {
-            int i = groups.FindIndex(p => p.Id == id);
-            if (i != -1) groups.RemoveAt(i);
+            await _repo.DeleteGroup(id);
         }
     }
 }

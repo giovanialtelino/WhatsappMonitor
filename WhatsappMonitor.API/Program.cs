@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using WhatsappMonitor.API.Context;
 
 namespace WhatsappMonitor.API
 {
@@ -13,7 +14,12 @@ namespace WhatsappMonitor.API
     {
         public static void Main(string[] args)
         {
+            MyDbContext ctx = new MyDbContext();
+            StartDbContext.StartDb(ctx);
+
             CreateHostBuilder(args).Build().Run();
+
+
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>

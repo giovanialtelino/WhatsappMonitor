@@ -6,20 +6,11 @@ using System.Threading.Tasks;
 
 namespace WhatsappMonitor.API.Context
 {
-    public class StartDbContext
+    public static class StartDbContext
     {
-        public void StartDb()
+        public static void StartDb(MyDbContext ctx)
         {
-            string dbName = "Whatsapp.db";
-            if (!File.Exists(dbName))
-            {
-                File.Create(dbName);
-            }
-
-            using (var dbContext = new MyDbContext())
-            {
-                dbContext.Database.EnsureCreated();
-            }
+            ctx.Database.EnsureCreated();
         }
     }
 }

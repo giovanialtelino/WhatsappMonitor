@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using WhatsappMonitor.Shared.Models;
+using WhatsappMonitor.API.Repository;
+using WhatsappMonitor.API.Context;
 
 namespace WhatsappMonitor.API.Controllers
 {
@@ -12,64 +14,41 @@ namespace WhatsappMonitor.API.Controllers
     [ApiController]
     public class UsersController : Controller
     {
-        private static readonly List<User> users = RandomUsers(5);
-
-        private static List<User> RandomUsers(int number)
+        private UsersRepository _repo;
+        public UsersController()
         {
-            return Enumerable.Range(1, number).Select(i => new User
-            {
-                Id = i,
-                Name = $"Name {i}",
-                CreationDate = DateTime.Now
-            }).ToList();
-        }
-
-        private int newId()
-        {
-            return users.Count + 1;
+            this._repo = new UsersRepository(new MyDbContext());
         }
 
         [HttpGet]
-        public ActionResult<List<User>> GetAllUsers()
+        public async Task<ActionResult<List<User>>> GetAllUsers()
         {
-            return users;
+            return await _repo.GetAllUsersAsync();
         }
 
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<User> GetUserById(int id)
+        public async Task<ActionResult<User>> GetUserById(int id)
         {
-            var user = users.FirstOrDefault(u => u.Id == id);
-            if (user == null) return NotFound();
-            return user;
+            return await _repo.GetUserById(id);
         }
 
         [HttpPost]
-        public void AddUser([FromBody] User user)
+        public async Task AddUser([FromBody] User user)
         {
-            var newUser = new User
-            {
-                Name = user.Name,
-                Id = newId(),
-                CreationDate = DateTime.Now
-            };
-            users.Add(newUser);
+            await _repo.AddUser(user);
         }
 
         [HttpPut("{id}")]
-        public void EditUser(int id, [FromBody] User user)
+        public async Task EditUser(int id, [FromBody] User user)
         {
-            int i = users.FindIndex(p => p.Id == id);
-            if (i != -1) users[i] = user;
+            await _repo.UpdateUser(id, user);
         }
 
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public async Task Delete(int id)
         {
-            int i = users.FindIndex(p => p.Id == id);
-            if (i != -1) users.RemoveAt(i);
+            await _repo.DeleteUser(id);
         }
-
-
     }
 }
