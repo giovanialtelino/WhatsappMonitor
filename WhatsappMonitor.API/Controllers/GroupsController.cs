@@ -4,10 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Hosting;
 using WhatsappMonitor.Shared.Models;
 using WhatsappMonitor.API.Context;
 using Microsoft.EntityFrameworkCore;
 using WhatsappMonitor.API.Repository;
+using System.IO;
 
 namespace WhatsappMonitor.API.Controllers
 {
@@ -16,9 +18,11 @@ namespace WhatsappMonitor.API.Controllers
     public class GroupsController : Controller
     {
         private GroupsRepository _repo;
+        private ChatsRepository _chat;
         public GroupsController()
         {
             this._repo = new GroupsRepository(new MyDbContext());
+            this._chat = new ChatsRepository(new MyDbContext());
         }
 
         [HttpGet]
@@ -50,6 +54,31 @@ namespace WhatsappMonitor.API.Controllers
         public async Task Delete(int id)
         {
             await _repo.DeleteGroup(id);
+        }
+
+        [HttpPost("file/{id}")]
+        public async Task OnPostUploadAsync(int id)
+        {
+            if (HttpContext.Request.Form.Files.Any())
+            {
+                foreach (var file in HttpContext.Request.Form.Files)
+                {
+                    var path = Path.Combine(Path.GetTempFileName());
+                    using (var stream = new FileStream(path, FileMode.Create))
+                    {
+                        await file.CopyToAsync(stream);
+                        String line;
+
+                        using (var sr = new StreamReader(path))
+                        {
+                            while ((line = sr.ReadLine()) != null)
+                            {
+                                await _chat.CleanAddChatGroup(line, id);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -79,7 +79,6 @@ else
         await apiServices.DeleteGroupById(i);
         await GetGroups();
     }
-
     private void GroupInfoPage(Group group)
     {
         NavigationManager.NavigateTo(String.Concat("/group/", group.Name));

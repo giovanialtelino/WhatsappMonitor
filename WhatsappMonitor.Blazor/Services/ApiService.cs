@@ -1,14 +1,17 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Hosting;
 using System.Text.Json;
 using System.Threading.Tasks;
 using WhatsappMonitor.Shared.Models;
-
+using System.IO;
+ 
 namespace WhatsappMonitor.Blazor.Services
 {
     public class ApiService
     {
+        private readonly IWebHostEnvironment _env;
         private readonly HttpClient _httpClient;
         public ApiService(HttpClient client)
         {
@@ -72,5 +75,12 @@ namespace WhatsappMonitor.Blazor.Services
             var group = new Group { Name = groupname };
             var response = await _httpClient.PostAsJsonAsync($"api/groups", group);
         }
+
+        public async Task PostFile(MultipartFormDataContent file, int id)
+        {
+            await _httpClient.PostAsync($"/api/groups/file/{id}", file);
+        }
+
+      
     }
 }

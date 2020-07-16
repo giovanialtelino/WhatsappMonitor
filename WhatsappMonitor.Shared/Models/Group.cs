@@ -1,9 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using System.ComponentModel;
+using System.Collections.Generic;
 
 namespace WhatsappMonitor.Shared.Models
 {
@@ -22,6 +21,6 @@ namespace WhatsappMonitor.Shared.Models
         [JsonPropertyName("creationDate")]
         public DateTime CreationDate { get; set; }
 
-        public List<User> Users { get; set; }
+        public List<Chat> Chats {get;set;}
     }
 }

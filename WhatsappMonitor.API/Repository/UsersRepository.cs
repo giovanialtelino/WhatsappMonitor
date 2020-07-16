@@ -15,12 +15,6 @@ namespace WhatsappMonitor.API.Repository
         {
             _context = context;
         }
-
-        private async Task<int> NextUserId()
-        {
-            return await _context.Users.CountAsync();
-        }
-
         private async Task<bool> UsernameAlreadyExist(string name)
         {
             var user = await _context.Users.FirstOrDefaultAsync(c => c.Name == name);
@@ -61,13 +55,10 @@ namespace WhatsappMonitor.API.Repository
 
             if (userExist == false)
             {
-                var id = await NextUserId();
-
                 var newUser = new User
                 {
                     Name = user.Name,
-                    CreationDate = DateTime.Now,
-                    Id = (id + 1)
+                    CreationDate = DateTime.Now
                 };
 
                 var add = _context.Users.Add(newUser);

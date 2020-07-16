@@ -1,13 +1,25 @@
 @page "/group/{group}"
 
+@using System.IO;
+@inject Services.ApiService apiServices
+@using WhatsappMonitor.Shared.Models
+  
 <h2>@Group Group</h2>
 
+<div>
+    <Upload />
+ </div>
 
 @code{
     [Parameter]
-    public String Group {get;set;}
-
-    protected override void OnInitialized(){
+    public String Group { get; set; }
+    protected override void OnInitialized()
+    {
         Group = Group;
     }
+
+
+
+
+
 }

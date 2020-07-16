@@ -9,7 +9,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="BlazorInputFile" Version="0.2.0" />
     <PackageReference Include="System.Net.Http.Json" Version="5.0.0-preview.6.20305.6" />
+    <PackageReference Include="Tewr.Blazor.FileReader" Version="1.6.0.20166" />
   </ItemGroup>   
 
 </Project>

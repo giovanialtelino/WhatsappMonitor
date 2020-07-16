@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
+ 
 namespace WhatsappMonitor.Blazor
 {
     public class Startup
@@ -27,7 +28,7 @@ namespace WhatsappMonitor.Blazor
         {
             services.AddRazorPages();
             services.AddServerSideBlazor();
-            services.AddHttpClient<Services.ApiService>(c =>
+             services.AddHttpClient<Services.ApiService>(c =>
             {
                 c.BaseAddress = new Uri("http://localhost:5001");
             });

@@ -22,7 +22,9 @@ namespace WhatsappMonitor.API.Context
             {
                 entity.HasKey(e => e.Id);
                 entity.HasIndex(e => e.Name).IsUnique();
-                entity.HasMany(e => e.Users);
+                entity.HasMany(e => e.Chats);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+                entity.HasMany(e => e.Chats);
             });
 
             modelbuilder.Entity<User>().ToTable("User", "postgres");
@@ -30,11 +32,21 @@ namespace WhatsappMonitor.API.Context
             {
                 entity.HasKey(e => e.Id);
                 entity.HasIndex(e => e.Name).IsUnique();
-                entity.HasMany(e => e.Groups);
+                entity.HasMany(e => e.Chats);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+                entity.HasMany(e => e.Chats);
+            });
+
+            modelbuilder.Entity<Chat>().ToTable("Chat", "postgres");
+            modelbuilder.Entity<Chat>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
             });
         }
 
         public DbSet<User> Users { get; set; }
         public DbSet<Group> Groups { get; set; }
+        public DbSet<Chat> Chats { get; set; }
     }
 }

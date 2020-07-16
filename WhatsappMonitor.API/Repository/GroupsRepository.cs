@@ -16,11 +16,6 @@ namespace WhatsappMonitor.API.Repository
             _context = context;
         }
 
-        private async Task<int> NextGroupId()
-        {
-            return await _context.Groups.CountAsync();
-        }
-
         private async Task<bool> GroupnameAlreadyExist(string name)
         {
             var group = await _context.Groups.FirstOrDefaultAsync(c => c.Name == name);
@@ -61,12 +56,10 @@ namespace WhatsappMonitor.API.Repository
 
             if (groupExist == false)
             {
-                var id = await NextGroupId();
                 var newGroup = new Group
                 {
                     Name = group.Name,
-                    CreationDate = DateTime.Now,
-                    Id = (id + 1)
+                    CreationDate = DateTime.Now
                 };
 
                 var add = _context.Groups.Add(newGroup);
@@ -80,5 +73,7 @@ namespace WhatsappMonitor.API.Repository
             _context.Groups.Remove(delete);
             await _context.SaveChangesAsync();
         }
+
+
     }
 }
