@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using WhatsappMonitor.Shared.Models;
 using System.IO;
- 
+
 namespace WhatsappMonitor.Blazor.Services
 {
     public class ApiService
@@ -24,7 +24,7 @@ namespace WhatsappMonitor.Blazor.Services
             return response;
         }
 
-        public async Task<User> GetUserByIdAsync(int id)
+        public async Task<User> GetUserByIdAsync(string id)
         {
             var response = await _httpClient.GetFromJsonAsync<User>($"api/users/{id}");
             return response;
@@ -54,7 +54,7 @@ namespace WhatsappMonitor.Blazor.Services
             return response;
         }
 
-        public async Task<Group> GetGroupByIdAsync(int id)
+        public async Task<Group> GetGroupByIdAsync(string id)
         {
             var response = await _httpClient.GetFromJsonAsync<Group>($"api/groups/{id}");
             return response;
@@ -76,11 +76,11 @@ namespace WhatsappMonitor.Blazor.Services
             var response = await _httpClient.PostAsJsonAsync($"api/groups", group);
         }
 
-        public async Task PostFile(MultipartFormDataContent file, int id)
+        public async Task PostFile(MultipartFormDataContent file, int id, string type)
         {
-            await _httpClient.PostAsync($"/api/groups/file/{id}", file);
+            System.Console.WriteLine($"/api/{type}/file/{id}");
+            System.Console.WriteLine("------------");
+            await _httpClient.PostAsync($"/api/{type}/file/{id}", file);
         }
-
-      
     }
 }

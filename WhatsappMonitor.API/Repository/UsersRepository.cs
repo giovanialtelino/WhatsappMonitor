@@ -37,6 +37,7 @@ namespace WhatsappMonitor.API.Repository
             return user;
         }
 
+
         public async Task UpdateUser(int id, User user)
         {
             var userExist = await UsernameAlreadyExist(user.Name);

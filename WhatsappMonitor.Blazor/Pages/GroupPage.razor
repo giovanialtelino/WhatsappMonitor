@@ -1,25 +1,37 @@
-@page "/group/{group}"
+@page "/group/{groupid}"
 
 @using System.IO;
 @inject Services.ApiService apiServices
 @using WhatsappMonitor.Shared.Models
   
-<h2>@Group Group</h2>
+ @if(group == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+<h2>@group.Name - Group</h2>
 
 <div>
-    <Upload />
+    <Upload 
+    Type = "groups"
+    Id = "@group.Id" />
  </div>
+} 
+
 
 @code{
     [Parameter]
-    public String Group { get; set; }
-    protected override void OnInitialized()
+    public String GroupId { get; set; }
+    public Group group { get; set; }
+
+    protected override async Task OnInitializedAsync()
     {
-        Group = Group;
+        await GetGroup();
     }
 
-
-
-
-
+    public async Task GetGroup()
+    {
+        group = await apiServices.GetGroupByIdAsync(GroupId);
+    }
 }

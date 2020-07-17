@@ -1,15 +1,19 @@
 @page "/singlefile"
 @inject Services.ApiService apiServices
 
-<h1>Single file</h1>
-
-<p>A single file input that uploads automatically on file selection</p>
+<h1>Chat File Selector</h1>
 
 <InputFile OnChange="HandleSelection" />
 
 <p>@status</p>
 
 @code {
+    [Parameter]
+    public int Id { get; set; }
+
+    [Parameter]
+    public string Type { get; set; }
+
     string status;
 
     async Task HandleSelection(IFileListEntry[] files)
@@ -17,19 +21,17 @@
         var file = files.FirstOrDefault();
         if (file != null)
         {
-            // Just load into .NET memory to show it can be done
-            // Alternatively it could be saved to disk, or parsed in memory, or similar
             var ms = new MemoryStream();
             await file.Data.CopyToAsync(ms);
 
             status = $"Finished loading {file.Size} bytes from {file.Name}";
-            
-            var content = new MultipartFormDataContent {
-                { new ByteArrayContent(ms.GetBuffer()), "\"upload\"", file.Name }
-            };
 
-            await apiServices.PostFile(content, 1);
-            
+            var content = new MultipartFormDataContent {
+        { new ByteArrayContent(ms.GetBuffer()), "\"upload\"", file.Name }
+    };
+
+            await apiServices.PostFile(content, Id, Type);
+
         }
     }
 }

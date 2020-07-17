@@ -19,53 +19,64 @@ namespace WhatsappMonitor.API.Repository
 
         private Chat Cleaner(string uncleaned)
         {
-            String value = uncleaned;
-            String valueAfterDate = "";
-            String valueAfterName = "";
-            var dateString = "";
-            var nameString = "";
-            var messageString = "";
-            var temp = "";
-            int start = 0;
-            // Extract sentences from the string.
-            var datePosition = value.IndexOf('-', start);
-            temp = value.Substring(start, datePosition - start + 1).Trim();
-            dateString = temp.Remove(temp.Length - 2);
-            valueAfterDate = value.Substring(datePosition - start + 1).Trim();
-            var namePosition = valueAfterDate.IndexOf(':', start);
-            if (namePosition != -1)
+            //bug when multiline chats are added, MUST BE FIXED
+            try
             {
-                temp = valueAfterDate.Substring(start, namePosition - start + 1).Trim();
-                nameString = temp.Remove(temp.Length - 1);
-                valueAfterName = valueAfterDate.Substring(namePosition - start + 1).Trim();
-                if (!((valueAfterName.StartsWith("<")) && (valueAfterName.EndsWith(">"))))
-                {
-                    messageString = valueAfterName;
-                }
-                else
-                {
-                    return null;
-                }
 
-                var parsedDate = new DateTime();
-                try
-                {
-                    parsedDate = DateTime.ParseExact(dateString, "dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
-                }
-                catch (System.Exception)
-                {
-                    return null;
-                }
+                String value = uncleaned;
+                String valueAfterDate = "";
+                String valueAfterName = "";
+                var dateString = "";
+                var nameString = "";
+                var messageString = "";
+                var temp = "";
+                int start = 0;
+                // Extract sentences from the string.
+                var datePosition = value.IndexOf('-', start);
+                temp = value.Substring(start, datePosition - start + 1).Trim();
+                dateString = temp.Remove(temp.Length - 2);
 
-                return new Chat
+                valueAfterDate = value.Substring(datePosition - start + 1).Trim();
+                var namePosition = valueAfterDate.IndexOf(':', start);
+                if (namePosition != -1)
                 {
-                    PersonName = nameString,
-                    Message = messageString,
-                    MessageTime = parsedDate
-                };
+                    temp = valueAfterDate.Substring(start, namePosition - start + 1).Trim();
+                    nameString = temp.Remove(temp.Length - 1);
+                    valueAfterName = valueAfterDate.Substring(namePosition - start + 1).Trim();
+                    if (!((valueAfterName.StartsWith("<")) && (valueAfterName.EndsWith(">"))))
+                    {
+                        messageString = valueAfterName;
+                    }
+                    else
+                    {
+                        return null;
+                    }
 
+                    var parsedDate = new DateTime();
+                    try
+                    {
+                        parsedDate = DateTime.ParseExact(dateString, "dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
+                    }
+                    catch (System.Exception)
+                    {
+                        return null;
+                    }
+
+                    return new Chat
+                    {
+                        PersonName = nameString,
+                        Message = messageString,
+                        MessageTime = parsedDate
+                    };
+
+                }
+                return null;
             }
-            return null;
+            catch (System.Exception)
+            {
+                return null;
+            }
+
         }
 
         public async Task CleanAddChatGroup(string line, int groupId)
@@ -81,7 +92,6 @@ namespace WhatsappMonitor.API.Repository
                     Message = cleaned.Message,
                     GroupId = groupId
                 };
-                Console.WriteLine(temp);
                 _context.Chats.Add(temp);
                 await _context.SaveChangesAsync();
             }

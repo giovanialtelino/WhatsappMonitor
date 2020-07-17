@@ -1,14 +1,35 @@
-@page "/user/{user}"
+@page "/user/{userid}"
 
+@using System.IO;
+@inject Services.ApiService apiServices
+@using WhatsappMonitor.Shared.Models
 
-<h2>@User page</h2>
+@if(user == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+<h2>@user.Name</h2>
 
+<div>
+    <Upload 
+    Type = "users"
+    Id = "@user.Id" />
+ </div>
+} 
 
 @code{
     [Parameter]
-    public String User {get;set;}
+    public String UserId { get; set; }
+    public User user { get; set; }
 
-    protected override void OnInitialized(){
-        User = User;
+    protected override async Task OnInitializedAsync()
+    {
+        await GetUser();
+    }
+    public async Task GetUser()
+    {
+        user = await apiServices.GetUserByIdAsync(UserId);
     }
 }
