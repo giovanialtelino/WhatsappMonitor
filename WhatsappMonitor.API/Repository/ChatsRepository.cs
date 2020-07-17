@@ -79,37 +79,198 @@ namespace WhatsappMonitor.API.Repository
 
         }
 
-        public async Task CleanAddChatGroup(string line, int groupId)
+        //Before adding must check if a equal message with the same date doesn't exist... 
+        //Will take some performance, but there is no UUID or similar to keep a single message
+        public async Task<bool> GroupMessageAlreadyExist(DateTime messageTime, string message, int groupId)
         {
-            var cleaned = Cleaner(line);
-
-            if (cleaned != null)
+            var result = await _context.Chats.FirstOrDefaultAsync(c => c.Message == message && c.MessageTime == messageTime && c.GroupId == groupId);
+            if (result == null)
             {
-                var temp = new Chat
-                {
-                    PersonName = cleaned.PersonName,
-                    MessageTime = cleaned.MessageTime,
-                    Message = cleaned.Message,
-                    GroupId = groupId
-                };
-                _context.Chats.Add(temp);
-                await _context.SaveChangesAsync();
+                return false;
+            }
+            else
+            {
+                return true;
             }
         }
 
-        public async Task CleanAddChatUser(string line, int userId)
+        public async Task<int> CleanAddChatGroup(string line, int groupId)
         {
             var cleaned = Cleaner(line);
             if (cleaned != null)
             {
-                _context.Chats.Add(cleaned);
-                await _context.SaveChangesAsync();
+
+                if (!await GroupMessageAlreadyExist(cleaned.MessageTime, cleaned.Message, groupId))
+                {
+                    var temp = new Chat
+                    {
+                        PersonName = cleaned.PersonName,
+                        MessageTime = cleaned.MessageTime,
+                        Message = cleaned.Message,
+                        GroupId = groupId
+                    };
+
+                    _context.Chats.Add(temp);
+                    await _context.SaveChangesAsync();
+                    return 1;
+                }
             }
+            return 0;
+        }
+
+        //Before adding must check if a equal message with the same date doesn't exist... 
+        //Will take some performance, but there is no UUID or similar to keep a single message
+        public async Task<bool> UserMessageAlreadyExist(DateTime messageTime, string message, int userId)
+        {
+            var result = await _context.Chats.FirstOrDefaultAsync(c => c.Message == message && c.MessageTime == messageTime && c.UserId == userId);
+            if (result == null)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        public async Task<int> CleanAddChatUser(string line, int userId)
+        {
+            var cleaned = Cleaner(line);
+            if (cleaned != null)
+            {
+
+                if (!await UserMessageAlreadyExist(cleaned.MessageTime, cleaned.Message, userId))
+                {
+                    var temp = new Chat
+                    {
+                        PersonName = cleaned.PersonName,
+                        MessageTime = cleaned.MessageTime,
+                        Message = cleaned.Message,
+                        UserId = userId
+                    };
+
+                    _context.Chats.Add(temp);
+                    await _context.SaveChangesAsync();
+                    return 1;
+                }
+            }
+            return 0;
         }
 
         public async Task<List<Chat>> GetAllChatsGroup(int id)
         {
-            return await _context.Chats.Where(c => c.GroupId == id).ToListAsync();
+            return await _context.Chats.Where(c => c.GroupId == id).OrderBy(c => c.Id).ToListAsync();
+        }
+
+        public async Task<List<Chat>> GetAllChatsUsers(int id)
+        {
+            return await _context.Chats.Where(c => c.UserId == id).OrderBy(c => c.Id).ToListAsync();
+        }
+
+        private List<Chat> SearchChatText(string text, List<Chat> messages)
+        {
+            var listChat = new List<Chat>();
+            foreach (var item in messages)
+            {
+                if (item.Message.Contains(text))
+                {
+                    listChat.Add(item);
+                }
+            }
+            return listChat;
+        }
+
+        public async Task<List<Chat>> SearchGroupChatText(string text, int id)
+        {
+
+            var messages = await _context.Chats.Where(c => c.GroupId == id).ToListAsync();
+            return SearchChatText(text, messages);
+        }
+
+        public async Task<List<Chat>> SearchUserChatText(string text, int id)
+        {
+            var messages = await _context.Chats.Where(c => c.UserId == id).ToListAsync();
+            return SearchChatText(text, messages);
+        }
+
+        public async Task<List<ParticipantDTO>> GetChatGroupParticipant(int id)
+        {
+            var participants = new List<ParticipantDTO>();
+            var users = await _context.Chats.Where(c => c.GroupId == id).Select(c => c.PersonName).Distinct().ToListAsync();
+            var totalMessages = 0;
+            var totalWords = 0;
+
+            foreach (var user in users)
+            {
+                var firstMessage = await _context.Chats.Where(c => c.GroupId == id && c.PersonName == user).MinAsync(c => c.MessageTime);
+                var messages = await _context.Chats.Where(c => c.GroupId == id && c.PersonName == user).Select(c => c.Message).ToListAsync();
+                var messageCounter = messages.Count();
+                var wordCounter = 0;
+
+                foreach (var item in messages)
+                {
+                    wordCounter = wordCounter + item.Split(new char[] { '.', '?', '!', ' ', ';', ':', ',' }, StringSplitOptions.RemoveEmptyEntries).Count();
+                }
+
+                totalMessages = totalMessages + messageCounter;
+                totalWords = totalWords + wordCounter;
+
+                participants.Add(new ParticipantDTO
+                {
+                    MessageCounter = messageCounter,
+                    FirstMessage = firstMessage,
+                    PersonName = user,
+                    WordsCounter = wordCounter
+                });
+            }
+
+            foreach (var item in participants)
+            {
+                item.MessageCounterPercentage = (item.MessageCounter * 100) / totalMessages;
+                item.WordsCounterPercentage = (item.WordsCounter * 100) / totalWords;
+            }
+
+            return participants;
+        }
+
+        public async Task<List<ParticipantDTO>> GetChatUserParticipant(int id)
+        {
+            var participants = new List<ParticipantDTO>();
+            var users = await _context.Chats.Where(c => c.UserId == id).Select(c => c.PersonName).Distinct().ToListAsync();
+            var totalMessages = 0;
+            var totalWords = 0;
+
+            foreach (var user in users)
+            {
+                var firstMessage = await _context.Chats.Where(c => c.UserId == id && c.PersonName == user).MinAsync(c => c.MessageTime);
+                var messages = await _context.Chats.Where(c => c.UserId == id && c.PersonName == user).Select(c => c.Message).ToListAsync();
+                var messageCounter = messages.Count();
+                var wordCounter = 0;
+
+                foreach (var item in messages)
+                {
+                    wordCounter = wordCounter + item.Split(new char[] { '.', '?', '!', ' ', ';', ':', ',' }, StringSplitOptions.RemoveEmptyEntries).Count();
+                }
+
+                totalMessages = totalMessages + messageCounter;
+                totalWords = totalWords + wordCounter;
+
+                participants.Add(new ParticipantDTO
+                {
+                    MessageCounter = messageCounter,
+                    FirstMessage = firstMessage,
+                    PersonName = user,
+                    WordsCounter = wordCounter
+                });
+            }
+
+            foreach (var item in participants)
+            {
+                item.MessageCounterPercentage = (item.MessageCounter * 100) / totalMessages;
+                item.WordsCounterPercentage = (item.WordsCounter * 100) / totalWords;
+            }
+
+            return participants;
         }
     }
 }

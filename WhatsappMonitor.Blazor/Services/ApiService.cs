@@ -76,11 +76,10 @@ namespace WhatsappMonitor.Blazor.Services
             var response = await _httpClient.PostAsJsonAsync($"api/groups", group);
         }
 
-        public async Task PostFile(MultipartFormDataContent file, int id, string type)
+        public async Task<int> PostFile(MultipartFormDataContent file, int id, string type)
         {
-            System.Console.WriteLine($"/api/{type}/file/{id}");
-            System.Console.WriteLine("------------");
-            await _httpClient.PostAsync($"/api/{type}/file/{id}", file);
+            var result = await _httpClient.PostAsync($"/api/{type}/file/{id}", file);
+            return await result.Content.ReadFromJsonAsync<int>();
         }
     }
 }

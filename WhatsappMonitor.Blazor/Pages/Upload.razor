@@ -1,11 +1,14 @@
 @page "/singlefile"
 @inject Services.ApiService apiServices
 
-<h1>Chat File Selector</h1>
+<p>Select file for upload</p>
 
 <InputFile OnChange="HandleSelection" />
 
+@if(status != null)
+{
 <p>@status</p>
+}
 
 @code {
     [Parameter]
@@ -19,18 +22,20 @@
     async Task HandleSelection(IFileListEntry[] files)
     {
         var file = files.FirstOrDefault();
+
         if (file != null)
         {
+            status = $"Loading file {file.Name}";
+
             var ms = new MemoryStream();
             await file.Data.CopyToAsync(ms);
 
-            status = $"Finished loading {file.Size} bytes from {file.Name}";
-
             var content = new MultipartFormDataContent {
-        { new ByteArrayContent(ms.GetBuffer()), "\"upload\"", file.Name }
+    { new ByteArrayContent(ms.GetBuffer()), "\"upload\"", file.Name }
     };
 
-            await apiServices.PostFile(content, Id, Type);
+            var added = await apiServices.PostFile(content, Id, Type);
+            status = $"{added} records were saved";
 
         }
     }

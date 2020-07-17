@@ -57,8 +57,9 @@ namespace WhatsappMonitor.API.Controllers
         }
 
         [HttpPost("file/{id}")]
-        public async Task OnPostUploadAsync(int id)
+        public async Task<int> OnPostUploadAsync(int id)
         {
+            var counter = 0;
             if (HttpContext.Request.Form.Files.Any())
             {
                 foreach (var file in HttpContext.Request.Form.Files)
@@ -73,12 +74,14 @@ namespace WhatsappMonitor.API.Controllers
                         {
                             while ((line = sr.ReadLine()) != null)
                             {
-                                await _chat.CleanAddChatGroup(line, id);
+                                counter = counter + (await _chat.CleanAddChatGroup(line, id));
                             }
                         }
                     }
                 }
             }
+
+            return counter;
         }
     }
 }
