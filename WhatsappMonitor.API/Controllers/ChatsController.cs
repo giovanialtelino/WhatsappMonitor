@@ -57,6 +57,16 @@ namespace WhatsappMonitor.API.Controllers
             return await _repo.GetChatUserParticipant(id);
         }
 
+        [HttpGet("group-uploads/{id}")]
+        public async Task<ActionResult<List<ChatUploadDTO>>> GetChatGroupUploadDates(int id)
+        {
+            return await _repo.GetChatGroupUploadDate(id);
+        }
 
+        [HttpGet("user-uploads/{id}")]
+        public async Task<ActionResult<List<ChatUploadDTO>>> GetChatUserUploadDates(int id)
+        {
+            return await _repo.GetChatUserUploadDate(id);
+        }
     }
 }

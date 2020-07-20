@@ -26,7 +26,7 @@ namespace WhatsappMonitor.Shared.Models
         [DisplayName("Words Counter")]
         [JsonPropertyName("wordsCounter")]
         public int WordsCounter { get; set; }
-       
+
         [Required]
         [DisplayName("Message Counter")]
         [JsonPropertyName("messageCounterPercentage")]
@@ -36,5 +36,18 @@ namespace WhatsappMonitor.Shared.Models
         [DisplayName("Words Counter")]
         [JsonPropertyName("wordsCounterPercentage")]
         public int WordsCounterPercentage { get; set; }
+    }
+
+    public class ChatUploadDTO
+    {
+        [Required]
+        [DisplayName("Upload Date")]
+        [JsonPropertyName("uploadDate")]
+        public DateTime UploadDate { get; set; }
+
+        [Required]
+        [DisplayName("Chat Count")]
+        [JsonPropertyName("chatCount")]
+        public int ChatCount { get; set; }
     }
 }

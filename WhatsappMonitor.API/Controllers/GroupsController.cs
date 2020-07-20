@@ -59,6 +59,7 @@ namespace WhatsappMonitor.API.Controllers
         [HttpPost("file/{id}")]
         public async Task<int> OnPostUploadAsync(int id)
         {
+            var systemTime = DateTime.Now;
             var counter = 0;
             if (HttpContext.Request.Form.Files.Any())
             {
@@ -74,13 +75,12 @@ namespace WhatsappMonitor.API.Controllers
                         {
                             while ((line = sr.ReadLine()) != null)
                             {
-                                counter = counter + (await _chat.CleanAddChatGroup(line, id));
+                                counter = counter + (await _chat.CleanAddChatGroup(line, id, systemTime));
                             }
                         }
                     }
                 }
             }
-
             return counter;
         }
     }

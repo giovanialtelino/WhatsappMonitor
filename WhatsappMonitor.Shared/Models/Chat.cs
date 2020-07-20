@@ -22,6 +22,11 @@ namespace WhatsappMonitor.Shared.Models
         public DateTime MessageTime { get; set; }
 
         [Required]
+        [DisplayName("System Time")]
+        [JsonPropertyName("systemTime")]
+        public DateTime SystemTime { get; set; }
+
+        [Required]
         [JsonPropertyName("message")]
         public String Message { get; set; }
 

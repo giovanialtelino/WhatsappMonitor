@@ -1,14 +1,28 @@
 @page "/singlefile"
 @inject Services.ApiService apiServices
 
+<div class="row">
+    <div class="col-sm">
+        
 <p>Select file for upload</p>
 
 <InputFile OnChange="HandleSelection" />
 
 @if(status != null)
-{
-<p>@status</p>
-}
+        {
+        <div class="alert alert-primary" role="alert">
+            @status   
+        </div>
+        }
+    </div>
+    <div class="col-sm">
+        
+    </div>
+</div>
+
+<div class="row">
+
+</div>
 
 @code {
     [Parameter]

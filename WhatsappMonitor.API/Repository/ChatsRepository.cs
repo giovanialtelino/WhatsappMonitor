@@ -94,7 +94,7 @@ namespace WhatsappMonitor.API.Repository
             }
         }
 
-        public async Task<int> CleanAddChatGroup(string line, int groupId)
+        public async Task<int> CleanAddChatGroup(string line, int groupId, DateTime systemTime)
         {
             var cleaned = Cleaner(line);
             if (cleaned != null)
@@ -107,7 +107,8 @@ namespace WhatsappMonitor.API.Repository
                         PersonName = cleaned.PersonName,
                         MessageTime = cleaned.MessageTime,
                         Message = cleaned.Message,
-                        GroupId = groupId
+                        GroupId = groupId,
+                        SystemTime = systemTime
                     };
 
                     _context.Chats.Add(temp);
@@ -133,7 +134,7 @@ namespace WhatsappMonitor.API.Repository
             }
         }
 
-        public async Task<int> CleanAddChatUser(string line, int userId)
+        public async Task<int> CleanAddChatUser(string line, int userId, DateTime systemTime)
         {
             var cleaned = Cleaner(line);
             if (cleaned != null)
@@ -146,7 +147,8 @@ namespace WhatsappMonitor.API.Repository
                         PersonName = cleaned.PersonName,
                         MessageTime = cleaned.MessageTime,
                         Message = cleaned.Message,
-                        UserId = userId
+                        UserId = userId,
+                        SystemTime = systemTime
                     };
 
                     _context.Chats.Add(temp);
@@ -271,6 +273,44 @@ namespace WhatsappMonitor.API.Repository
             }
 
             return participants;
+        }
+
+        public async Task<List<ChatUploadDTO>> GetChatGroupUploadDate(int id)
+        {
+            var chatList = new List<ChatUploadDTO>();
+
+            var chatDates = await _context.Chats.Where(c => c.GroupId == id).Select(c => c.SystemTime).Distinct().ToListAsync();
+
+            foreach (var date in chatDates)
+            {
+                var dateCounter = await _context.Chats.Where(c => c.SystemTime == date && c.GroupId == id).CountAsync();
+                chatList.Add(new ChatUploadDTO
+                {
+                    ChatCount = dateCounter,
+                    UploadDate = date
+                });
+            }
+
+            return chatList;
+        }
+
+        public async Task<List<ChatUploadDTO>> GetChatUserUploadDate(int id)
+        {
+            var chatList = new List<ChatUploadDTO>();
+
+            var chatDates = await _context.Chats.Where(c => c.UserId == id).Select(c => c.SystemTime).Distinct().ToListAsync();
+
+            foreach (var date in chatDates)
+            {
+                var dateCounter = await _context.Chats.Where(c => c.SystemTime == date && c.UserId == id).CountAsync();
+                chatList.Add(new ChatUploadDTO
+                {
+                    ChatCount = dateCounter,
+                    UploadDate = date
+                });
+            }
+
+            return chatList;
         }
     }
 }
