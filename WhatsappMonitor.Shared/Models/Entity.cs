@@ -6,11 +6,11 @@ using System.Collections.Generic;
 
 namespace WhatsappMonitor.Shared.Models
 {
-    public class Group
+    public class Entity
     {
         [Key]
         [JsonPropertyName("id")]
-        public int Id { get; set; }
+        public int EntityId { get; set; }
 
         [Required]
         [JsonPropertyName("name")]
@@ -22,5 +22,10 @@ namespace WhatsappMonitor.Shared.Models
         public DateTime CreationDate { get; set; }
 
         public List<Chat> Chats {get;set;}
+        public Entity(string name)
+        {
+            Name = name;
+            CreationDate = DateTime.Now;
+        }
     }
 }

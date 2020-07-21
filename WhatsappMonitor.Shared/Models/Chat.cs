@@ -9,7 +9,7 @@ namespace WhatsappMonitor.Shared.Models
     {
         [Key]
         [JsonPropertyName("id")]
-        public int Id { get; set; }
+        public int ChatId { get; set; }
 
         [Required]
         [DisplayName("Person Name")]
@@ -30,10 +30,30 @@ namespace WhatsappMonitor.Shared.Models
         [JsonPropertyName("message")]
         public String Message { get; set; }
 
-        public int? GroupId { get; set; }
-        public Group Group { get; set; }
+        public int? EntityId { get; set; }
+        public Entity Group { get; set; }
+        public Chat(){}
 
-        public int? UserId { get; set; }
-        public User User { get; set; }
+        public Chat(string personName, string message, DateTime messageTime)
+        {
+            PersonName = personName;
+            Message = message;
+            MessageTime = messageTime;
+        }
+        public Chat(string personName, DateTime messageTime, DateTime systemTime, string message)
+        {
+            PersonName = personName;
+            MessageTime = messageTime;
+            SystemTime = systemTime;
+            Message = message;
+        }
+        public Chat(string personName, DateTime messageTime, DateTime systemTime, string message, int entityId)
+        {
+            PersonName = personName;
+            MessageTime = messageTime;
+            SystemTime = systemTime;
+            Message = message;
+            EntityId = entityId;
+        }
     }
 }

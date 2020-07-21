@@ -1,1 +1,51 @@
 @page "/chatReader"
+
+@inject Services.ApiService apiServices
+@using WhatsappMonitor.Shared.Models;
+
+<div style="justify-content: center;" class="form-row">
+    <h2>Chat Reader</h2>
+</div>
+
+@if(chats == null)
+{
+<p>Loading for a word.</p>
+}
+else
+{
+@foreach (var chat in chats)
+{
+<li class="list-group-item">
+   <div class="form-row">
+       <div class="col-8">
+           <p>@chat.Message</p>
+       </div>
+       <div class="col-2">
+           <p>@chat.PersonName</p>
+       </div>
+       <div class="col-2">
+           <p>@chat.MessageTime</p>
+       </div>
+   </div>
+</li>
+}
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    List<Chat> chats;
+    int skip = 0;
+
+     protected override async Task OnInitializedAsync()
+    {
+        await LoadChat();
+    }
+
+    public async Task LoadChat()
+    {
+        chats = await apiServices.LoadChat(Id, skip);
+        skip = skip + chats.Count();
+    }
+     
+}

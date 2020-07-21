@@ -15,45 +15,45 @@ namespace WhatsappMonitor.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class GroupsController : Controller
+    public class EntitiesController : Controller
     {
-        private GroupsRepository _repo;
+        private EntitiesRepository _repo;
         private ChatsRepository _chat;
-        public GroupsController()
+        public EntitiesController()
         {
-            this._repo = new GroupsRepository(new MyDbContext());
+            this._repo = new EntitiesRepository(new MyDbContext());
             this._chat = new ChatsRepository(new MyDbContext());
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Group>>> GetAllGroups()
+        public async Task<ActionResult<List<Entity>>> GetAllEntites()
         {
-            return await _repo.GetAllGroupsAsync();
+            return await _repo.GetAllEntitiesAsync();
         }
 
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<Group>> GetGroupById(int id)
+        public async Task<ActionResult<Entity>> GetEntityById(int id)
         {
-            return await _repo.GetGroupById(id);
+            return await _repo.GetEntityById(id);
         }
 
         [HttpPost]
-        public async Task AddGroup([FromBody] Group group)
+        public async Task AddEntity([FromBody] Entity entity)
         {
-            await _repo.AddGroup(group);
+            await _repo.AddEntity(entity);
         }
 
         [HttpPut("{id}")]
-        public async Task EditGroup(int id, [FromBody] Group group)
+        public async Task EditEntity(int id, [FromBody] Entity entity)
         {
-            await _repo.UpdateGroup(id, group);
+            await _repo.UpdateEntity(id, entity);
         }
 
         [HttpDelete("{id}")]
         public async Task Delete(int id)
         {
-            await _repo.DeleteGroup(id);
+            await _repo.DeleteEntity(id);
         }
 
         [HttpPost("file/{id}")]
@@ -75,7 +75,7 @@ namespace WhatsappMonitor.API.Controllers
                         {
                             while ((line = sr.ReadLine()) != null)
                             {
-                                counter = counter + (await _chat.CleanAddChatGroup(line, id, systemTime));
+                                counter = counter + (await _chat.CleanAddChat(line, id, systemTime));
                             }
                         }
                     }

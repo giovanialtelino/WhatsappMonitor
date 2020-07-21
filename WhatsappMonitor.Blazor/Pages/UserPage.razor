@@ -1,66 +1,74 @@
-@page "/user/{userid}"
+@page "/user/{entityId}"
 
 @using System.IO;
 @inject Services.ApiService apiServices
 @using WhatsappMonitor.Shared.Models
 @using WhatsappMonitor.Blazor.Pages.Chat
 
-<div class="form-row">
-@if(user == null)
+@if(entity == null)
 {
     <p><em>Loading...</em></p>
 }
 else
 {
-<h2>@user.Name</h2>
+     <div style="justify-content: center;" class="form-row">
+        <h2>@entity.Name</h2>
+    </div>
+    <hr />
+
+    <div style="justify-content: center;" class="form-row">
+        <div class="form-group col-md-2">
+            <button type="button" class="btn btn-primary" @onclick="(() => ChangeSelected(0))">Chat Info</button>
+        </div>
+        <div class="form-group col-md-2">
+            <button type="button" class="btn btn-primary" @onclick="(() => ChangeSelected(1))">Chat Reader</button>
+        </div>
+        <div class="form-group col-md-2">
+            <button type="button" class="btn btn-primary" @onclick="(() => ChangeSelected(2))">Chat Searcher</button>
+        </div>
+        <div class="form-group col-md-2">
+            <button type="button" class="btn btn-primary" @onclick="(() => ChangeSelected(3))">Chat
+                Participants</button>
+        </div>
+        <div class="form-group col-md-2">
+            <button type="button" class="btn btn-primary" @onclick="(() => ChangeSelected(4))">Upload Chats</button>
+        </div>
+    </div>
 }
-</div>
 
-<div class="form-row mx-auto">
-    <div class="form-group col-2">
-        <button type="button" class="btn btn-primary" @onclick="(() => ChangeSelected(0))">Chat Info</button>
-    </div>
-    <div class="form-group col-2">
-        <button type="button" class="btn btn-primary" @onclick="(() => ChangeSelected(1))">Chat Reader</button>
-    </div>
-    <div class="form-group col-2">
-<button type="button" class="btn btn-primary" @onclick="(() => ChangeSelected(2))">Chat Searcher</button>
-    </div>
-    <div class="form-group col-2">
-<button type="button" class="btn btn-primary" @onclick="(() => ChangeSelected(3))">Chat Participants</button>
-    </div>
-    <div class="form-group col-2">
-<button type="button" class="btn btn-primary" @onclick="(() => ChangeSelected(4))">Upload Dates</button>
-    </div>
-</div>
+<hr />
 
-<div class="form-row">
 @if(selected == 0)
 {
 
 }
 else if(selected == 1)
 {
- <div class="form-row">
-    <Upload 
-    Type = "groups"
-    Id = "@user.Id" />
- </div>   
- <div class="form-row">
-     <UploadDates
-     Type = "groups"
-     Id ="@user.Id"/>
- </div>
+    <ChatReader
+    Id = "@entity.EntityId" />
 }
-
+else if(selected == 2)
+{
+    <ChatSeacher
+    Id = "@entity.EntityId" />
+}
+else if(selected == 3)
+{
+    <Participants
+    Id = "@entity.EntityId" />
+}
+else if(selected == 4)
+{
+    <Upload
+    Id = "@entity.EntityId" />
+    <UploadDates
+    Id = "@entity.EntityId" />
+}
  
-</div>
-
-
 @code{
     [Parameter]
-    public String UserId { get; set; }
-    public User user { get; set; }
+    public String entityId { get; set; }
+    public Entity entity { get; set; }
     public int selected {get;set;}
 
     protected override async Task OnInitializedAsync()
@@ -70,7 +78,7 @@ else if(selected == 1)
     }
     public async Task GetUser()
     {
-        user = await apiServices.GetUserByIdAsync(UserId);
+        entity = await apiServices.GetEntityByIdAsync(entityId);
     }
 
     public void ChangeSelected(int i)

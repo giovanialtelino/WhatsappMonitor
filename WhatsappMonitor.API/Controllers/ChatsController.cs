@@ -21,52 +21,58 @@ namespace WhatsappMonitor.API.Controllers
             this._repo = new ChatsRepository(new MyDbContext());
         }
 
-        [HttpGet("group/{id}")]
-        public async Task<ActionResult<List<Chat>>> GetAllChatsGroup(int id)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<List<Chat>>> GetAllChatsEntity(int id)
         {
-            return await _repo.GetAllChatsGroup(id);
+            return await _repo.GetAllChatsEntity(id);
         }
 
-        [HttpGet("user/{id}")]
-        public async Task<ActionResult<List<Chat>>> GetAllChatsUser(int id)
+        [HttpGet("load/{id}/{pagination}")]
+        public async Task<ActionResult<List<Chat>>> GetChatsPagination(int id, int pagination)
         {
-            return await _repo.GetAllChatsUsers(id);
+            return await _repo.GetAllChatsPagination(id, pagination);
         }
 
-        [HttpGet("group-search/{id}/{message}")]
-        public async Task<ActionResult<List<Chat>>> SearchChatGroup(string message, int id)
+        [HttpGet("search/{id}/{message}")]
+        public async Task<ActionResult<List<Chat>>> SearchChat(string message, int id)
         {
-            return await _repo.SearchGroupChatText(message, id);
+            return await _repo.SearchEntityChatText(message, id);
         }
 
-        [HttpGet("user-search/{id}/{message}")]
-        public async Task<ActionResult<List<Chat>>> SearchChatUser(string message, int id)
+        [HttpGet("members/{id}")]
+        public async Task<ActionResult<List<ParticipantDTO>>> GetChatParticipant(int id)
         {
-            return await _repo.SearchUserChatText(message, id);
+            return await _repo.GetChatParticipants(id);
         }
 
-        [HttpGet("group-members/{id}")]
-        public async Task<ActionResult<List<ParticipantDTO>>> GetChatGroupParticipant(int id)
+        [HttpGet("uploads/{id}")]
+        public async Task<ActionResult<List<ChatUploadDTO>>> GetChatUploadDates(int id)
         {
-            return await _repo.GetChatGroupParticipant(id);
+            return await _repo.GetChatUploadDate(id);
         }
 
-        [HttpGet("user-members/{id}")]
-        public async Task<ActionResult<List<ParticipantDTO>>> GetChatUserParticipant(int id)
+        [HttpPut("update-name/{id}")]
+        public async Task UpdateNameChat(int id, [FromBody] ParticipantDTO participant)
         {
-            return await _repo.GetChatUserParticipant(id);
+            await _repo.UpdateNameChat(id, participant);
         }
 
-        [HttpGet("group-uploads/{id}")]
-        public async Task<ActionResult<List<ChatUploadDTO>>> GetChatGroupUploadDates(int id)
+        [HttpDelete("delete-name/{id}/{name}")]
+        public async Task DeleteNameChat(int id, string name)
         {
-            return await _repo.GetChatGroupUploadDate(id);
+            await _repo.DeleteNameChat(id, name);
         }
 
-        [HttpGet("user-uploads/{id}")]
-        public async Task<ActionResult<List<ChatUploadDTO>>> GetChatUserUploadDates(int id)
+        [HttpPut("delete-date/{id}")]
+        public async Task DeleteDateChat(int id, [FromBody] ChatUploadDTO dto)
         {
-            return await _repo.GetChatUserUploadDate(id);
+            await _repo.DeleteDateChat(id, dto);
+        }
+
+        [HttpGet("chat-info/{id}")]
+        public async Task<TotalFolderInfoDTO> GetChatInfo(int id, [FromBody] ChatInfoDate dates)
+        {
+            return await _repo.GetFullChatInfo(id, dates);
         }
     }
 }

@@ -1,4 +1,4 @@
-@page "/users"
+@page "/folder"
 
 @inject NavigationManager NavigationManager
 @inject Services.ApiService apiServices
@@ -8,7 +8,7 @@
 
 <form>
     <div class="form-group">
-        <input class="form-control" type="text" placeholder="Name" @bind="newUser">
+        <input class="form-control" type="text" placeholder="Name" @bind="newEntity">
     </div>
     <div class="form-group">
         <button class="btn btn-primary" @onclick="AddUser">Add User</button>
@@ -17,22 +17,22 @@
 
 <br>
 
-@if (users == null)
+@if (entities == null)
 {
     <p><em>Loading...</em></p>
 }
 else
 {
    <ul class="list-group">
-    @foreach (var i in users)
+    @foreach (var i in entities)
     {
         <li class="list-group-item">
             <form>
                 <div class="form-group">
     <input class="form-control" type="text" @bind="i.Name"></div>
     <div class="form-group">
-    <button type="button" class="btn btn-secondary" @onclick="(() => EditUser(i.Id))" >Edit</button>
-    <button type="button" class="btn btn-danger" @onclick="(() => DeleteUser(i.Id))">Delete</button>
+    <button type="button" class="btn btn-secondary" @onclick="(() => EditUser(i.EntityId))" >Edit</button>
+    <button type="button" class="btn btn-danger" @onclick="(() => DeleteUser(i.EntityId))">Delete</button>
     <button type="button" class="btn btn-success" @onclick="(() => UserInfoPage(i))">Information</button>
     </div>
     </form>
@@ -44,8 +44,8 @@ else
 
 
 @code {
-    private List<User> users;
-    private string newUser;
+    private List<Entity> entities;
+    private string newEntity;
     protected override async Task OnInitializedAsync()
     {
         await GetUsers();
@@ -54,36 +54,36 @@ else
     private async Task GetUsers()
     {
 
-        users = await apiServices.GetUsersAsync();
+        entities = await apiServices.GetentitiesAsync();
     }
 
     private async Task AddUser()
     {
-        if (!string.IsNullOrWhiteSpace(newUser))
+        if (!string.IsNullOrWhiteSpace(newEntity))
         {
-             await apiServices.AddUser(newUser);
+             await apiServices.AddEntity(newEntity);
             await GetUsers();
         }
     }
 
     private async Task EditUser(int i)
     {
-        var selectedUser = users.First(p => p.Id == i);
-        if (!string.IsNullOrWhiteSpace(selectedUser.Name))
+        var selectedEntity = entities.First(p => p.EntityId == i);
+        if (!string.IsNullOrWhiteSpace(selectedEntity.Name))
         {
-            await apiServices.EditUser(selectedUser);
+            await apiServices.EditEntity(selectedEntity);
             await GetUsers();
         }
     }
 
     private async Task DeleteUser(int i)
     {
-         await apiServices.DeleteUserById(i);
+         await apiServices.DeleteEntityById(i);
          await GetUsers();
     }
 
-    private void UserInfoPage(User user)
+    private void UserInfoPage(Entity entity)
     {
-        NavigationManager.NavigateTo(String.Concat("/user/", user.Id));
+        NavigationManager.NavigateTo(String.Concat("/user/", entity.EntityId));
     }
 }

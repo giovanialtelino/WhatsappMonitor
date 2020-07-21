@@ -11,6 +11,9 @@ namespace WhatsappMonitor.Shared.Models
         [DisplayName("Person Name")]
         [JsonPropertyName("personName")]
         public string PersonName { get; set; }
+        [Required]
+        [JsonPropertyName("fixedName")]
+        public string FixedName { get; set; }
 
         [Required]
         [DisplayName("First Message")]
@@ -49,5 +52,11 @@ namespace WhatsappMonitor.Shared.Models
         [DisplayName("Chat Count")]
         [JsonPropertyName("chatCount")]
         public int ChatCount { get; set; }
+    }
+
+    public class ChatInfoDate
+    {
+        public DateTime? From { get; set; }
+        public DateTime? Until { get; set; }
     }
 }

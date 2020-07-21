@@ -62,12 +62,7 @@ namespace WhatsappMonitor.API.Repository
                         return null;
                     }
 
-                    return new Chat
-                    {
-                        PersonName = nameString,
-                        Message = messageString,
-                        MessageTime = parsedDate
-                    };
+                    return new Chat(nameString, messageString, parsedDate); ;
 
                 }
                 return null;
@@ -81,9 +76,9 @@ namespace WhatsappMonitor.API.Repository
 
         //Before adding must check if a equal message with the same date doesn't exist... 
         //Will take some performance, but there is no UUID or similar to keep a single message
-        public async Task<bool> GroupMessageAlreadyExist(DateTime messageTime, string message, int groupId)
+        public async Task<bool> MessageAlreadyExist(DateTime messageTime, string message, int entityId)
         {
-            var result = await _context.Chats.FirstOrDefaultAsync(c => c.Message == message && c.MessageTime == messageTime && c.GroupId == groupId);
+            var result = await _context.Chats.FirstOrDefaultAsync(c => c.Message == message && c.MessageTime == messageTime && c.EntityId == entityId);
             if (result == null)
             {
                 return false;
@@ -94,23 +89,14 @@ namespace WhatsappMonitor.API.Repository
             }
         }
 
-        public async Task<int> CleanAddChatGroup(string line, int groupId, DateTime systemTime)
+        public async Task<int> CleanAddChat(string line, int entityId, DateTime systemTime)
         {
             var cleaned = Cleaner(line);
             if (cleaned != null)
             {
-
-                if (!await GroupMessageAlreadyExist(cleaned.MessageTime, cleaned.Message, groupId))
+                if (!await MessageAlreadyExist(cleaned.MessageTime, cleaned.Message, entityId))
                 {
-                    var temp = new Chat
-                    {
-                        PersonName = cleaned.PersonName,
-                        MessageTime = cleaned.MessageTime,
-                        Message = cleaned.Message,
-                        GroupId = groupId,
-                        SystemTime = systemTime
-                    };
-
+                    var temp = new Chat(cleaned.PersonName, cleaned.MessageTime, systemTime, cleaned.Message, entityId);
                     _context.Chats.Add(temp);
                     await _context.SaveChangesAsync();
                     return 1;
@@ -119,54 +105,16 @@ namespace WhatsappMonitor.API.Repository
             return 0;
         }
 
-        //Before adding must check if a equal message with the same date doesn't exist... 
-        //Will take some performance, but there is no UUID or similar to keep a single message
-        public async Task<bool> UserMessageAlreadyExist(DateTime messageTime, string message, int userId)
+        public async Task<List<Chat>> GetAllChatsEntity(int id)
         {
-            var result = await _context.Chats.FirstOrDefaultAsync(c => c.Message == message && c.MessageTime == messageTime && c.UserId == userId);
-            if (result == null)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+            return await _context.Chats.Where(c => c.EntityId == id).OrderBy(c => c.EntityId).ToListAsync();
         }
 
-        public async Task<int> CleanAddChatUser(string line, int userId, DateTime systemTime)
+        public async Task<List<Chat>> GetAllChatsPagination(int id, int pagination)
         {
-            var cleaned = Cleaner(line);
-            if (cleaned != null)
-            {
-
-                if (!await UserMessageAlreadyExist(cleaned.MessageTime, cleaned.Message, userId))
-                {
-                    var temp = new Chat
-                    {
-                        PersonName = cleaned.PersonName,
-                        MessageTime = cleaned.MessageTime,
-                        Message = cleaned.Message,
-                        UserId = userId,
-                        SystemTime = systemTime
-                    };
-
-                    _context.Chats.Add(temp);
-                    await _context.SaveChangesAsync();
-                    return 1;
-                }
-            }
-            return 0;
-        }
-
-        public async Task<List<Chat>> GetAllChatsGroup(int id)
-        {
-            return await _context.Chats.Where(c => c.GroupId == id).OrderBy(c => c.Id).ToListAsync();
-        }
-
-        public async Task<List<Chat>> GetAllChatsUsers(int id)
-        {
-            return await _context.Chats.Where(c => c.UserId == id).OrderBy(c => c.Id).ToListAsync();
+            var chat = await _context.Chats.Where(c => c.EntityId == id).OrderByDescending(c => c.MessageTime).ToListAsync();
+            var result = chat.Skip(pagination).Take(50).ToList();
+            return result;
         }
 
         private List<Chat> SearchChatText(string text, List<Chat> messages)
@@ -182,30 +130,23 @@ namespace WhatsappMonitor.API.Repository
             return listChat;
         }
 
-        public async Task<List<Chat>> SearchGroupChatText(string text, int id)
+        public async Task<List<Chat>> SearchEntityChatText(string text, int id)
         {
-
-            var messages = await _context.Chats.Where(c => c.GroupId == id).ToListAsync();
+            var messages = await _context.Chats.Where(c => c.EntityId == id).OrderByDescending(c => c.MessageTime).ToListAsync();
             return SearchChatText(text, messages);
         }
 
-        public async Task<List<Chat>> SearchUserChatText(string text, int id)
-        {
-            var messages = await _context.Chats.Where(c => c.UserId == id).ToListAsync();
-            return SearchChatText(text, messages);
-        }
-
-        public async Task<List<ParticipantDTO>> GetChatGroupParticipant(int id)
+        public async Task<List<ParticipantDTO>> GetChatParticipants(int id)
         {
             var participants = new List<ParticipantDTO>();
-            var users = await _context.Chats.Where(c => c.GroupId == id).Select(c => c.PersonName).Distinct().ToListAsync();
+            var users = await _context.Chats.Where(c => c.EntityId == id).Select(c => c.PersonName).Distinct().ToListAsync();
             var totalMessages = 0;
             var totalWords = 0;
 
             foreach (var user in users)
             {
-                var firstMessage = await _context.Chats.Where(c => c.GroupId == id && c.PersonName == user).MinAsync(c => c.MessageTime);
-                var messages = await _context.Chats.Where(c => c.GroupId == id && c.PersonName == user).Select(c => c.Message).ToListAsync();
+                var firstMessage = await _context.Chats.Where(c => c.EntityId == id && c.PersonName == user).MinAsync(c => c.MessageTime);
+                var messages = await _context.Chats.Where(c => c.EntityId == id && c.PersonName == user).Select(c => c.Message).ToListAsync();
                 var messageCounter = messages.Count();
                 var wordCounter = 0;
 
@@ -222,6 +163,7 @@ namespace WhatsappMonitor.API.Repository
                     MessageCounter = messageCounter,
                     FirstMessage = firstMessage,
                     PersonName = user,
+                    FixedName = user,
                     WordsCounter = wordCounter
                 });
             }
@@ -232,85 +174,109 @@ namespace WhatsappMonitor.API.Repository
                 item.WordsCounterPercentage = (item.WordsCounter * 100) / totalWords;
             }
 
-            return participants;
+            return participants.OrderBy(c => c.PersonName).ToList();
         }
 
-        public async Task<List<ParticipantDTO>> GetChatUserParticipant(int id)
+        public async Task UpdateNameChat(int entityId, ParticipantDTO participant)
         {
-            var participants = new List<ParticipantDTO>();
-            var users = await _context.Chats.Where(c => c.UserId == id).Select(c => c.PersonName).Distinct().ToListAsync();
-            var totalMessages = 0;
-            var totalWords = 0;
+            var newName = participant.PersonName;
+            var oldName = participant.FixedName;
 
-            foreach (var user in users)
+            var toUpdate = await _context.Chats.Where(c => c.PersonName == oldName).ToListAsync();
+
+            foreach (var item in toUpdate)
             {
-                var firstMessage = await _context.Chats.Where(c => c.UserId == id && c.PersonName == user).MinAsync(c => c.MessageTime);
-                var messages = await _context.Chats.Where(c => c.UserId == id && c.PersonName == user).Select(c => c.Message).ToListAsync();
-                var messageCounter = messages.Count();
-                var wordCounter = 0;
+                item.PersonName = newName;
 
-                foreach (var item in messages)
+            }
+
+            await _context.SaveChangesAsync();
+
+        }
+
+        public async Task DeleteNameChat(int entityId, string name)
+        {
+            var toDelete = await _context.Chats.Where(c => c.EntityId == entityId && c.PersonName == name).ToListAsync();
+            _context.Chats.RemoveRange(toDelete);
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<ChatUploadDTO>> GetChatUploadDate(int id)
+        {
+            var chatList = new List<ChatUploadDTO>();
+
+            var chatDates = await _context.Chats.Where(c => c.EntityId == id).Select(c => c.SystemTime).Distinct().ToListAsync();
+
+            foreach (var date in chatDates)
+            {
+                var dateCounter = await _context.Chats.Where(c => c.SystemTime == date && c.EntityId == id).CountAsync();
+                chatList.Add(new ChatUploadDTO
                 {
-                    wordCounter = wordCounter + item.Split(new char[] { '.', '?', '!', ' ', ';', ':', ',' }, StringSplitOptions.RemoveEmptyEntries).Count();
+                    ChatCount = dateCounter,
+                    UploadDate = date
+                });
+            }
+
+            return chatList;
+        }
+
+
+        public async Task DeleteDateChat(int entityId, ChatUploadDTO dto)
+        {
+            var date = dto.UploadDate;
+            var toDelete = await _context.Chats.Where(c => c.EntityId == entityId && c.SystemTime == date).ToListAsync();
+            _context.Chats.RemoveRange(toDelete);
+
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task<ChatInfoDate> CheckDates(ChatInfoDate dates)
+        {
+            if (dates.From != null && dates.Until != null)
+            {
+                return dates;
+            }
+            else
+            {
+                var from = await _context.Chats.MinAsync(c => c.MessageTime);
+                var until = await _context.Chats.MaxAsync(c => c.MessageTime);
+                var startToFinish = new ChatInfoDate { From = from, Until = until };
+                return startToFinish;
+            }
+        }
+
+        public async Task<TotalFolderInfoDTO> GetFullChatInfo(int entityId, ChatInfoDate dates)
+        {
+            var checkedDates = await CheckDates(dates);
+            var messages = await _context.Chats.Where(e => e.EntityId == entityId).ToListAsync();
+            var totalMessages = messages.Count();
+            var wordCounter = 0;
+            var superWordList = new List<string>();
+
+            foreach (var item in messages)
+            {
+                var splits = item.Message.Split(new char[] { '.', '?', '!', ' ', ';', ':', ',' }, StringSplitOptions.RemoveEmptyEntries);
+                wordCounter = wordCounter + splits.Count();
+                foreach (var word in splits)
+                {
+                    superWordList.Add(word);
                 }
-
-                totalMessages = totalMessages + messageCounter;
-                totalWords = totalWords + wordCounter;
-
-                participants.Add(new ParticipantDTO
-                {
-                    MessageCounter = messageCounter,
-                    FirstMessage = firstMessage,
-                    PersonName = user,
-                    WordsCounter = wordCounter
-                });
             }
 
-            foreach (var item in participants)
+            var commonHours = messages.GroupBy(c => c.MessageTime.Hour).Select(c => new Tuple<string, int>(c.Key.ToString(), c.Count())).OrderBy(c => c.Item1).ToList();
+
+            var commonWords = superWordList.GroupBy(c => c).Select(c => new Tuple<string, int>(c.Key.ToString(), c.Count())).OrderByDescending(c => c.Item2).Take(10).ToList();
+
+            var total = new TotalFolderInfoDTO
             {
-                item.MessageCounterPercentage = (item.MessageCounter * 100) / totalMessages;
-                item.WordsCounterPercentage = (item.WordsCounter * 100) / totalWords;
-            }
+                TotalMessage = totalMessages.ToString(),
+                TotalWords = wordCounter.ToString(),
+                CommonWords = commonWords,
+                CommonHours = commonHours
+            };
 
-            return participants;
-        }
-
-        public async Task<List<ChatUploadDTO>> GetChatGroupUploadDate(int id)
-        {
-            var chatList = new List<ChatUploadDTO>();
-
-            var chatDates = await _context.Chats.Where(c => c.GroupId == id).Select(c => c.SystemTime).Distinct().ToListAsync();
-
-            foreach (var date in chatDates)
-            {
-                var dateCounter = await _context.Chats.Where(c => c.SystemTime == date && c.GroupId == id).CountAsync();
-                chatList.Add(new ChatUploadDTO
-                {
-                    ChatCount = dateCounter,
-                    UploadDate = date
-                });
-            }
-
-            return chatList;
-        }
-
-        public async Task<List<ChatUploadDTO>> GetChatUserUploadDate(int id)
-        {
-            var chatList = new List<ChatUploadDTO>();
-
-            var chatDates = await _context.Chats.Where(c => c.UserId == id).Select(c => c.SystemTime).Distinct().ToListAsync();
-
-            foreach (var date in chatDates)
-            {
-                var dateCounter = await _context.Chats.Where(c => c.SystemTime == date && c.UserId == id).CountAsync();
-                chatList.Add(new ChatUploadDTO
-                {
-                    ChatCount = dateCounter,
-                    UploadDate = date
-                });
-            }
-
-            return chatList;
+            return total;
         }
     }
 }

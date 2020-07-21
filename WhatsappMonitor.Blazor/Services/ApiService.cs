@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using WhatsappMonitor.Shared.Models;
 using System.IO;
+using System;
 
 namespace WhatsappMonitor.Blazor.Services
 {
@@ -18,68 +19,84 @@ namespace WhatsappMonitor.Blazor.Services
             _httpClient = client;
         }
 
-        public async Task<List<User>> GetUsersAsync()
+        public async Task<List<Entity>> GetentitiesAsync()
         {
-            var response = await _httpClient.GetFromJsonAsync<List<User>>("api/users");
+            var response = await _httpClient.GetFromJsonAsync<List<Entity>>("api/entities");
             return response;
         }
 
-        public async Task<User> GetUserByIdAsync(string id)
+        public async Task<Entity> GetEntityByIdAsync(string id)
         {
-            var response = await _httpClient.GetFromJsonAsync<User>($"api/users/{id}");
+            var response = await _httpClient.GetFromJsonAsync<Entity>($"api/entities/{id}");
             return response;
         }
 
-        public async Task DeleteUserById(int id)
+        public async Task DeleteEntityById(int id)
         {
-            var response = await _httpClient.DeleteAsync($"api/users/{id}");
+            var response = await _httpClient.DeleteAsync($"api/entities/{id}");
         }
 
-        public async Task EditUser(User user)
+        public async Task EditEntity(Entity Entity)
         {
-            var response = await _httpClient.PutAsJsonAsync($"api/users/{user.Id}", user);
+            var response = await _httpClient.PutAsJsonAsync($"api/entities/{Entity.EntityId}", Entity);
         }
 
-        public async Task AddUser(string username)
+        public async Task AddEntity(string Entityname)
         {
-            var user = new User { Name = username };
-
-            var response = await _httpClient.PostAsJsonAsync($"api/users", user);
+            var Entity = new Entity(Entityname);
+            var response = await _httpClient.PostAsJsonAsync($"api/entities", Entity);
         }
 
-        //Groups
-        public async Task<List<Group>> GetGroupsAsync()
+        public async Task<int> PostFile(MultipartFormDataContent file, int id)
         {
-            var response = await _httpClient.GetFromJsonAsync<List<Group>>("api/groups");
-            return response;
-        }
-
-        public async Task<Group> GetGroupByIdAsync(string id)
-        {
-            var response = await _httpClient.GetFromJsonAsync<Group>($"api/groups/{id}");
-            return response;
-        }
-
-        public async Task DeleteGroupById(int id)
-        {
-            var response = await _httpClient.DeleteAsync($"api/groups/{id}");
-        }
-
-        public async Task EditGroup(Group group)
-        {
-            var response = await _httpClient.PutAsJsonAsync($"api/groups/{group.Id}", group);
-        }
-
-        public async Task AddGroup(string groupname)
-        {
-            var group = new Group { Name = groupname };
-            var response = await _httpClient.PostAsJsonAsync($"api/groups", group);
-        }
-
-        public async Task<int> PostFile(MultipartFormDataContent file, int id, string type)
-        {
-            var result = await _httpClient.PostAsync($"/api/{type}/file/{id}", file);
+            var result = await _httpClient.PostAsync($"/api/entities/file/{id}", file);
             return await result.Content.ReadFromJsonAsync<int>();
+        }
+
+        public async Task<List<Chat>> GetChatsEntity(int id)
+        {
+            var result = await _httpClient.GetFromJsonAsync<List<Chat>>($"/api/chats/{id}");
+            return result;
+        }
+
+        public async Task<List<ParticipantDTO>> GetParticipants(int id)
+        {
+            var result = await _httpClient.GetFromJsonAsync<List<ParticipantDTO>>($"/api/chats/members/{id}");
+            return result;
+        }
+
+        public async Task<List<ChatUploadDTO>> GetChatUploadDates(int id)
+        {
+            var result = await _httpClient.GetFromJsonAsync<List<ChatUploadDTO>>($"/api/chats/uploads/{id}");
+
+            return result;
+        }
+
+        public async Task DeleteChatUpload(int id, ChatUploadDTO toDelete)
+        {
+            var result = await _httpClient.PutAsJsonAsync($"/api/chats/delete-date/{id}", toDelete);
+        }
+
+        public async Task UpdateChatPersonName(int id, ParticipantDTO person)
+        {
+            var result = await _httpClient.PutAsJsonAsync($"/api/chats/update-name/{id}", person);
+        }
+
+        public async Task DeleteChatPersonName(int id, string name)
+        {            
+            var result = await _httpClient.DeleteAsync($"/api/chats/delete-name/{id}/{name}");
+        }
+
+         public async Task<List<Chat>> SearchChatWord(int id, string word)
+        {            
+            var result = await _httpClient.GetFromJsonAsync<List<Chat>>($"/api/chats/search/{id}/{word}");
+            return result;
+        }
+
+        public async Task<List<Chat>> LoadChat(int id, int pag)
+        {
+            var result = await _httpClient.GetFromJsonAsync<List<Chat>>($"/api/chats/load/{id}/{pag}");
+            return result;
         }
     }
 }
