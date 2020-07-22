@@ -70,9 +70,15 @@ namespace WhatsappMonitor.API.Controllers
         }
 
         [HttpGet("chat-info/{id}")]
-        public async Task<TotalFolderInfoDTO> GetChatInfo(int id, [FromBody] ChatInfoDate dates)
+        public async Task<TotalFolderInfoDTO> GetChatInfo(int id, [FromQuery] string from, [FromQuery] string until)
         {
-            return await _repo.GetFullChatInfo(id, dates);
+            return await _repo.GetFullChatInfo(id, from, until);
+        }
+
+        [HttpGet("chat-users/{id}")]
+        public async Task<List<ChatPersonInfoDTO>> GetChatParticipantsInfo(int id, [FromQuery] string from, [FromQuery] string until)
+        {
+            return await _repo.GetChatParticipantsInfo(id, from, until);
         }
     }
 }

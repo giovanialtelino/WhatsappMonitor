@@ -231,24 +231,24 @@ namespace WhatsappMonitor.API.Repository
             await _context.SaveChangesAsync();
         }
 
-        private async Task<ChatInfoDate> CheckDates(ChatInfoDate dates)
+        private async Task<ChatInfoDate> CheckDates(string from, string until)
         {
-            if (dates.From != null && dates.Until != null)
+            if (String.IsNullOrWhiteSpace(from) && String.IsNullOrWhiteSpace(until))
             {
-                return dates;
+                return new ChatInfoDate { From = DateTime.Parse(from), Until = DateTime.Parse(until) };
             }
             else
             {
-                var from = await _context.Chats.MinAsync(c => c.MessageTime);
-                var until = await _context.Chats.MaxAsync(c => c.MessageTime);
-                var startToFinish = new ChatInfoDate { From = from, Until = until };
+                var fromMin = await _context.Chats.MinAsync(c => c.MessageTime);
+                var untilMax = await _context.Chats.MaxAsync(c => c.MessageTime);
+                var startToFinish = new ChatInfoDate { From = fromMin, Until = untilMax };
                 return startToFinish;
             }
         }
 
-        public async Task<TotalFolderInfoDTO> GetFullChatInfo(int entityId, ChatInfoDate dates)
+        public async Task<TotalFolderInfoDTO> GetFullChatInfo(int entityId, string from, string until)
         {
-            var checkedDates = await CheckDates(dates);
+            var checkedDates = await CheckDates(from, until);
             var messages = await _context.Chats.Where(e => e.EntityId == entityId).ToListAsync();
             var totalMessages = messages.Count();
             var wordCounter = 0;
@@ -264,19 +264,89 @@ namespace WhatsappMonitor.API.Repository
                 }
             }
 
-            var commonHours = messages.GroupBy(c => c.MessageTime.Hour).Select(c => new Tuple<string, int>(c.Key.ToString(), c.Count())).OrderBy(c => c.Item1).ToList();
+            var commonHours = messages.GroupBy(c => c.MessageTime.Hour).Select(c => new Tuple<string, int>(c.Key.ToString(), c.Count())).ToList();
 
-            var commonWords = superWordList.GroupBy(c => c).Select(c => new Tuple<string, int>(c.Key.ToString(), c.Count())).OrderByDescending(c => c.Item2).Take(10).ToList();
+            var totalHours = commonHours.Sum(c => c.Item2);
+            var commonHoursPercentage = new List<Tuple<string, double>>();
+
+            foreach (var item in commonHours)
+            {
+                double percentage = (item.Item2 * 100) / totalMessages;
+                commonHoursPercentage.Add(new Tuple<string, double>(item.Item1, percentage));
+            }
+
+            var commonWords = superWordList.GroupBy(c => c).Select(c => new Tuple<string, double>(c.Key.ToString(), c.Count())).OrderByDescending(c => c.Item2).Take(10).ToList();
 
             var total = new TotalFolderInfoDTO
             {
-                TotalMessage = totalMessages.ToString(),
-                TotalWords = wordCounter.ToString(),
+                TotalMessage = totalMessages,
+                TotalWords = wordCounter,
                 CommonWords = commonWords,
-                CommonHours = commonHours
+                CommonHours = commonHoursPercentage.OrderByDescending(c => c.Item2).Take(10).ToList()
             };
-
             return total;
+        }
+
+        public async Task<List<ChatPersonInfoDTO>> GetChatParticipantsInfo(int entityId, string from, string until)
+        {
+            var personList = new List<ChatPersonInfoDTO>();
+
+            var checkedDates = await CheckDates(from, until);
+            var Messages = await _context.Chats.Where(e => e.EntityId == entityId).ToListAsync();
+
+            var personMessages = Messages.GroupBy(c => c.PersonName);
+
+
+            foreach (var person in personMessages)
+            {
+                var messageCounter = person.Select(c => c.Message).Count();
+                var wordCounter = 0;
+                var personWordList = new List<String>();
+
+                foreach (var message in person.Select(c => c.Message))
+                {
+                    var splits = message.Split(new char[] { '.', '?', '!', ' ', ';', ':', ',' }, StringSplitOptions.RemoveEmptyEntries);
+                    wordCounter = wordCounter + splits.Count();
+                    foreach (var word in splits)
+                    {
+                        personWordList.Add(word);
+                    }
+                }
+
+                var commonWords = personWordList.GroupBy(c => c).Select(c => new Tuple<string, int>(c.Key.ToString(), c.Count())).OrderByDescending(c => c.Item2).Take(10).ToList();
+
+                var commonHours = person.GroupBy(c => c.MessageTime.Hour).Select(c => new Tuple<string, int>(c.Key.ToString(), c.Count())).ToList();
+                var totalHours = commonHours.Sum(c => c.Item2);
+
+                var commonHoursPercentage = new List<Tuple<string, double>>();
+
+                foreach (var item in commonHours)
+                {
+                    double percentage = (item.Item2 * 100) / messageCounter;
+                    commonHoursPercentage.Add(new Tuple<string, double>(item.Item1, percentage));
+                }
+
+                personList.Add(new ChatPersonInfoDTO
+                {
+                    PersonName = person.Select(c => c.PersonName).FirstOrDefault(),
+                    MessageCounter = messageCounter,
+                    WordsCounter = wordCounter,
+                    CommonWords = commonWords,
+                    Hours = commonHours
+                });
+            }
+
+            var totalMessages = personList.Sum(c => c.MessageCounter);
+            var totalWords = personList.Sum(c => c.WordsCounter);
+
+            foreach (var item in personList)
+            {
+                var message = (item.MessageCounter * 100) / totalMessages;
+                var words = (item.WordsCounter * 100) / totalWords;
+                item.MessagePercentage = message;
+                item.WordsPercentage = words;
+            }
+            return personList;
         }
     }
 }

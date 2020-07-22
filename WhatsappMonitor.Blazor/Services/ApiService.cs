@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using System.Text.Json;
 using System.Threading.Tasks;
 using WhatsappMonitor.Shared.Models;
+using Microsoft.AspNetCore.WebUtilities;
 using System.IO;
 using System;
 
@@ -83,12 +84,12 @@ namespace WhatsappMonitor.Blazor.Services
         }
 
         public async Task DeleteChatPersonName(int id, string name)
-        {            
+        {
             var result = await _httpClient.DeleteAsync($"/api/chats/delete-name/{id}/{name}");
         }
 
-         public async Task<List<Chat>> SearchChatWord(int id, string word)
-        {            
+        public async Task<List<Chat>> SearchChatWord(int id, string word)
+        {
             var result = await _httpClient.GetFromJsonAsync<List<Chat>>($"/api/chats/search/{id}/{word}");
             return result;
         }
@@ -96,6 +97,30 @@ namespace WhatsappMonitor.Blazor.Services
         public async Task<List<Chat>> LoadChat(int id, int pag)
         {
             var result = await _httpClient.GetFromJsonAsync<List<Chat>>($"/api/chats/load/{id}/{pag}");
+            return result;
+        }
+
+        public async Task<TotalFolderInfoDTO> GetTotalFolderInfo(int id, DateTime from, DateTime until)
+        {
+            var query = new Dictionary<string, string>
+            {
+                ["from"] = from.ToString(),
+                ["until"] = until.ToString()
+            };
+
+            var result = await _httpClient.GetFromJsonAsync<TotalFolderInfoDTO>(QueryHelpers.AddQueryString(($"/api/chats/chat-info/{id}"), query));
+            return result;
+        }
+
+        public async Task<List<ChatPersonInfoDTO>> GetTotalFolderUsersInfo(int id, DateTime from, DateTime until)
+        {
+            var query = new Dictionary<string, string>
+            {
+                ["from"] = from.ToString(),
+                ["until"] = until.ToString()
+            };
+
+            var result = await _httpClient.GetFromJsonAsync<List<ChatPersonInfoDTO>>(QueryHelpers.AddQueryString(($"/api/chats/chat-users/{id}"), query));
             return result;
         }
     }
