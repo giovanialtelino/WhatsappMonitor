@@ -13,22 +13,33 @@
 }
 else
 {
-@foreach (var chat in chats)
-{
-<li class="list-group-item">
-   <div class="form-row">
-       <div class="col-8">
-           <p>@chat.Message</p>
-       </div>
-       <div class="col-2">
-           <p>@chat.PersonName</p>
-       </div>
-       <div class="col-2">
-           <p>@chat.MessageTime</p>
-       </div>
-   </div>
-</li>
-}
+<ChatComponent
+chats = "@chats" />
+
+<div class="form-row">
+    <div class="col-2">
+        <button type="button" class="btn btn-primary" > 
+            <label>&nbsp;</label>
+            <span class="oi oi-caret-left" aria-hidden="true" @onclick="BackChat"></span>
+            &nbsp;
+        </button>
+    </div>
+    <div class="col-2">
+        <label>&nbsp;</label>
+        <button type="button" class="btn btn-primary" > 
+            <span class="oi oi-caret-right" aria-hidden="true" @onclick="NextChat"></span>
+            
+        </button>
+    </div>
+
+    <div class="col-4"    >
+<label>Jump to Date</label>
+<input type="date" @bind="@dateJump" class="form-control">
+        </div>
+           <button type="button" class="btn btn-primary" > 
+            <span class="oi oi-target" aria-hidden="true" @onclick="JumpDate"></span>            
+        </button>
+</div>
 }
 
 @code {
@@ -36,6 +47,7 @@ else
     public int Id { get; set; }
     List<Chat> chats;
     int skip = 0;
+    DateTime dateJump;
 
      protected override async Task OnInitializedAsync()
     {
@@ -47,5 +59,27 @@ else
         chats = await apiServices.LoadChat(Id, skip);
         skip = skip + chats.Count();
     }
-     
+
+    public async Task BackChat()
+    {
+        chats = null;
+        skip = skip - 50;
+                        await LoadChat();
+                        
+            }
+
+    public async Task NextChat()
+    {
+        chats = null;
+                skip = skip + 50;
+await LoadChat();
+
+    }     
+
+    public async Task JumpDate()
+    {
+        chats = null;
+        skip = await apiServices.JumpChatToDate(Id, dateJump);
+        await LoadChat();
+    }
 }

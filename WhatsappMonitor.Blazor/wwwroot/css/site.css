@@ -190,3 +190,18 @@ app {
 {
     z-index: 10000 !important;
 }
+
+.no-margin-td
+{
+    margin-top: 0;
+    margin-bottom: 0;
+    align-self: center;
+}
+
+.short-padding
+{
+padding-top: 0.25rem;
+padding-bottom: 0.25rem;
+padding-left: 0.5rem;
+padding-right: 0.5rem;
+}

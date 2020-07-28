@@ -1,0 +1,50 @@
+@page "/beingUploaded"
+
+@inject Services.ApiService apiServices
+@using WhatsappMonitor.Shared.Models;
+
+<div style="justify-content: center;" class="form-row">
+    <h2>Uploads waiting to be indexed</h2>
+</div>
+
+@if(uploads == null)
+{
+<p>Loading....</p>
+}
+else
+{
+@foreach (var i in uploads)
+    {
+<li class="list-group-item">
+    <form>
+        <div class="form-row">
+            <div class="form-group col-md-2">
+                <label for="">Upload Date</label>
+                <input class="form-control" type="text" @bind="i.CreationDate">
+            </div>
+            <div class="form-group col-md-10">
+                <label for="">File Name</label>
+                <input class="form-control" type="text" @bind="i.FileName">
+            </div>
+        </div>
+    </form>
+</li>
+<br>
+    }
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    List<Upload> uploads;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetUploadsWaiting();
+    }
+
+    public async Task GetUploadsWaiting()
+    {
+        uploads = await apiServices.UploadWaiting(Id);
+    }    
+}

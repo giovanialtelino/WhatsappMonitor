@@ -1,0 +1,25 @@
+@page "/chatComponent"
+
+@using WhatsappMonitor.Shared.Models;
+
+@foreach (var chat in chats)
+{
+<li class="list-group-item short-padding">
+   <div class="form-row">
+        <div class="col-2 no-margin-td">
+           <p class="no-margin-td">@chat.PersonName</p>
+       </div>
+       <div class="col-2 no-margin-td">
+           <p class="no-margin-td">@chat.MessageTime</p>
+       </div>
+       <div class="col-8 no-margin-td">
+           <p class="no-margin-td">@chat.Message</p>
+       </div>
+   </div>
+</li>
+}
+
+@code {
+    [Parameter]
+    public List<Chat> chats {get;set;}
+}

@@ -6,28 +6,28 @@ using System.Collections.Generic;
 
 namespace WhatsappMonitor.Shared.Models
 {
-    public class Entity
+    public class Upload
     {
         [Key]
         [JsonPropertyName("id")]
-        public int EntityId { get; set; }
+        public int UploadId { get; set; }
 
         [Required]
         [JsonPropertyName("name")]
-        public string Name { get; set; }
+        public string FileName { get; set; }
 
         [Required]
         [DisplayName("Creation Date")]
         [JsonPropertyName("creationDate")]
         public DateTime CreationDate { get; set; }
 
-        public List<Chat> Chats {get;set;}
-        public List<Upload> Uploads {get;set;}
+        [Required]
+        [DisplayName("File Content")]
+        [JsonPropertyName("fileContent")]
+        public Byte[] FileContent { get; set; }
 
-        public Entity(string name)
-        {
-            Name = name;
-            CreationDate = DateTime.Now;
-        }
+       
+        public Entity Entity { get; set; }
+        public int EntityId { get; set; }
     }
 }

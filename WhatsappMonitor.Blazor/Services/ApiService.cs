@@ -100,6 +100,22 @@ namespace WhatsappMonitor.Blazor.Services
             return result;
         }
 
+        public async Task<int> JumpChatToDate(int id, DateTime date)
+        {
+            var query = new Dictionary<string, string>
+            {
+                ["startDate"] = date.ToString()
+            };
+            var result = await _httpClient.GetFromJsonAsync<int>(QueryHelpers.AddQueryString(($"/api/chats/search-date/{id}"), query));
+            return result;
+        }        
+
+         public async Task<List<Upload>> UploadWaiting(int id)
+        {
+            var result = await _httpClient.GetFromJsonAsync<List<Upload>>($"/api/chats/awaiting-process/{id}");
+            return result;
+        }
+
         public async Task<TotalFolderInfoDTO> GetTotalFolderInfo(int id, DateTime from, DateTime until)
         {
             var query = new Dictionary<string, string>

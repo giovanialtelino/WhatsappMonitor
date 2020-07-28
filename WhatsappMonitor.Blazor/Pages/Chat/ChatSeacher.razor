@@ -22,22 +22,8 @@
 }
 else
 {
-@foreach (var chat in chats)
-{
-<li class="list-group-item">
-   <div class="form-row">
-       <div class="col-8">
-           <p>@chat.Message</p>
-       </div>
-       <div class="col-2">
-           <p>@chat.PersonName</p>
-       </div>
-       <div class="col-2">
-           <p>@chat.MessageTime</p>
-       </div>
-   </div>
-</li>
-}
+<ChatComponent
+chats = "@chats" />
 }
 
 @code {

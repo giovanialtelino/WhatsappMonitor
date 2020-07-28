@@ -5,6 +5,7 @@ using WhatsappMonitor.API.Context;
 using WhatsappMonitor.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.IO;
 
 namespace WhatsappMonitor.API.Repository
 {
@@ -56,7 +57,7 @@ namespace WhatsappMonitor.API.Repository
 
             if (entityExist == false)
             {
-                var newEntity = new Entity(entity.Name);               
+                var newEntity = new Entity(entity.Name);
                 var add = _context.Entities.Add(newEntity);
                 await _context.SaveChangesAsync();
             }
@@ -68,5 +69,21 @@ namespace WhatsappMonitor.API.Repository
             _context.Entities.Remove(delete);
             await _context.SaveChangesAsync();
         }
+
+        public async Task UploadFile(int entityId, DateTime uploadTime, string fileName, byte[] fileContent)
+        {
+            var newUpload = new Upload
+            {
+                FileName = fileName,
+                CreationDate = uploadTime,
+                FileContent = fileContent,
+                EntityId = entityId
+            };
+
+            _context.Uploads.Add(newUpload);
+            await _context.SaveChangesAsync();
+        }
+
+        
     }
 }

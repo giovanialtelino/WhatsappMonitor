@@ -1,11 +1,16 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
+using System.Threading.Tasks.Sources;
 using WhatsappMonitor.API.Context;
 using WhatsappMonitor.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Globalization;
+using System.Text;
+using System.IO;
 
 namespace WhatsappMonitor.API.Repository
 {
@@ -17,66 +22,9 @@ namespace WhatsappMonitor.API.Repository
             _context = context;
         }
 
-        private Chat Cleaner(string uncleaned)
-        {
-            //bug when multiline chats are added, MUST BE FIXED
-            try
-            {
-
-                String value = uncleaned;
-                String valueAfterDate = "";
-                String valueAfterName = "";
-                var dateString = "";
-                var nameString = "";
-                var messageString = "";
-                var temp = "";
-                int start = 0;
-                // Extract sentences from the string.
-                var datePosition = value.IndexOf('-', start);
-                temp = value.Substring(start, datePosition - start + 1).Trim();
-                dateString = temp.Remove(temp.Length - 2);
-
-                valueAfterDate = value.Substring(datePosition - start + 1).Trim();
-                var namePosition = valueAfterDate.IndexOf(':', start);
-                if (namePosition != -1)
-                {
-                    temp = valueAfterDate.Substring(start, namePosition - start + 1).Trim();
-                    nameString = temp.Remove(temp.Length - 1);
-                    valueAfterName = valueAfterDate.Substring(namePosition - start + 1).Trim();
-                    if (!((valueAfterName.StartsWith("<")) && (valueAfterName.EndsWith(">"))))
-                    {
-                        messageString = valueAfterName;
-                    }
-                    else
-                    {
-                        return null;
-                    }
-
-                    var parsedDate = new DateTime();
-                    try
-                    {
-                        parsedDate = DateTime.ParseExact(dateString, "dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
-                    }
-                    catch (System.Exception)
-                    {
-                        return null;
-                    }
-
-                    return new Chat(nameString, messageString, parsedDate); ;
-
-                }
-                return null;
-            }
-            catch (System.Exception)
-            {
-                return null;
-            }
-
-        }
-
         //Before adding must check if a equal message with the same date doesn't exist... 
         //Will take some performance, but there is no UUID or similar to keep a single message
-        public async Task<bool> MessageAlreadyExist(DateTime messageTime, string message, int entityId)
+        private async Task<bool> MessageAlreadyExist(DateTime messageTime, string message, int entityId)
         {
             var result = await _context.Chats.FirstOrDefaultAsync(c => c.Message == message && c.MessageTime == messageTime && c.EntityId == entityId);
             if (result == null)
@@ -89,22 +37,6 @@ namespace WhatsappMonitor.API.Repository
             }
         }
 
-        public async Task<int> CleanAddChat(string line, int entityId, DateTime systemTime)
-        {
-            var cleaned = Cleaner(line);
-            if (cleaned != null)
-            {
-                if (!await MessageAlreadyExist(cleaned.MessageTime, cleaned.Message, entityId))
-                {
-                    var temp = new Chat(cleaned.PersonName, cleaned.MessageTime, systemTime, cleaned.Message, entityId);
-                    _context.Chats.Add(temp);
-                    await _context.SaveChangesAsync();
-                    return 1;
-                }
-            }
-            return 0;
-        }
-
         public async Task<List<Chat>> GetAllChatsEntity(int id)
         {
             return await _context.Chats.Where(c => c.EntityId == id).OrderBy(c => c.EntityId).ToListAsync();
@@ -112,9 +44,22 @@ namespace WhatsappMonitor.API.Repository
 
         public async Task<List<Chat>> GetAllChatsPagination(int id, int pagination)
         {
+            var cleanPagination = 0;
+            if (pagination >= 0) cleanPagination = pagination;
+
+            cleanPagination = cleanPagination - 50;
+
             var chat = await _context.Chats.Where(c => c.EntityId == id).OrderByDescending(c => c.MessageTime).ToListAsync();
-            var result = chat.Skip(pagination).Take(50).ToList();
+            var result = chat.Skip(cleanPagination).Take(50).ToList();
             return result;
+        }
+
+        public async Task<int> SearchEntityChatTextByDate(int id, string date)
+        {
+            var parsedDate = DateTime.Parse(date);
+            var chat = await _context.Chats.Where(c => c .EntityId == id && c.MessageTime >= parsedDate).OrderByDescending(c => c.MessageTime).CountAsync();
+
+            return chat;
         }
 
         private List<Chat> SearchChatText(string text, List<Chat> messages)
@@ -174,7 +119,7 @@ namespace WhatsappMonitor.API.Repository
                 item.WordsCounterPercentage = (item.WordsCounter * 100) / totalWords;
             }
 
-            return participants.OrderBy(c => c.PersonName).ToList();
+            return participants.OrderByDescending(c => c.MessageCounterPercentage).ToList();
         }
 
         public async Task UpdateNameChat(int entityId, ParticipantDTO participant)
@@ -187,9 +132,7 @@ namespace WhatsappMonitor.API.Repository
             foreach (var item in toUpdate)
             {
                 item.PersonName = newName;
-
             }
-
             await _context.SaveChangesAsync();
 
         }
@@ -221,6 +164,17 @@ namespace WhatsappMonitor.API.Repository
             return chatList;
         }
 
+       public async Task<List<Upload>> GetUploadAwaiting(int id)
+       {
+           var uploadList =await _context.Uploads.Where(e => e.EntityId == id).ToListAsync();
+
+           foreach (var item in uploadList)
+           {
+               item.FileContent = null;
+           }
+
+           return uploadList;
+       }
 
         public async Task DeleteDateChat(int entityId, ChatUploadDTO dto)
         {
@@ -347,6 +301,148 @@ namespace WhatsappMonitor.API.Repository
                 item.WordsPercentage = words;
             }
             return personList;
+        }
+
+        private DateTime? ValidDate(string line)
+        {
+            var start = 0;
+            var datePosition = line.IndexOf('-', start);
+            if (datePosition != -1)
+            {
+                var temp = line.Substring(start, datePosition - start + 1).Trim();
+
+                if (temp.Length < 6) return null;
+
+                var dateString = temp.Remove(temp.Length - 2);
+                var parsedDate = new DateTime();
+                if (DateTime.TryParseExact(dateString, "dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedDate))
+                {
+                    return parsedDate;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private String ValidSender(string line)
+        {
+            var start = 0;
+            var datePosition = line.IndexOf('-', start);
+            var valueAfterDate = line.Substring(datePosition - start + 1).Trim();
+            var namePosition = valueAfterDate.IndexOf(':', start);
+            if (namePosition != -1)
+            {
+                var temp = valueAfterDate.Substring(start, namePosition - start + 1).Trim();
+                return temp.Remove(temp.Length - 1);
+            }
+            else
+            {
+                return "";
+            }
+        }
+
+        private String CleanMessage(string line)
+        {
+            var start = 0;
+            var datePosition = line.IndexOf('-', start);
+            var valueAfterDate = line.Substring(datePosition - start + 1).Trim();
+            var namePosition = valueAfterDate.IndexOf(':', start);
+            var valueAfterName = valueAfterDate.Substring(namePosition - start + 1).Trim();
+
+            if (!((valueAfterName.StartsWith("<")) && (valueAfterName.EndsWith(">"))))
+            {
+                return valueAfterName;
+            }
+            else
+            {
+                return "";
+            }
+        }
+
+        private static SemaphoreSlim semaphore;
+
+        public async Task ProcessEntityFiles()
+        {
+            semaphore = new SemaphoreSlim(1, 1);
+
+            await semaphore.WaitAsync();
+
+            try
+            {
+                var fileList = await _context.Uploads.AsNoTracking().ToListAsync();
+                var systemTime = DateTime.Now;
+
+                foreach (var file in fileList)
+                {
+                    var chatList = new List<Chat>();
+                    var toString = Encoding.UTF8.GetString(file.FileContent);
+
+                    string[] lines = toString.Split(
+                        new[] { "\r\n", "\r", "\n" },
+                        StringSplitOptions.None
+                    );
+
+                    //not a fan of this approach
+                    var linesCounter = lines.Count() - 1;
+
+                    var messageDate = ValidDate(lines[0]);
+                    var messageSender = ValidSender(lines[0]);
+                    var messageText = CleanMessage(lines[0]);
+
+                    for (int i = 0; i < linesCounter; i++)
+                    {
+                        var date = ValidDate(lines[i]);
+                        var sender = ValidSender(lines[i]);
+                        var message = CleanMessage(lines[i]);
+
+                        if (date != null)
+                        {
+                            if (String.IsNullOrWhiteSpace(message) == false)
+                            {
+                                if (String.IsNullOrWhiteSpace(messageText) == false && String.IsNullOrWhiteSpace(messageSender) == false)
+                                {
+                                    if (!await MessageAlreadyExist(messageDate.Value, messageText, file.EntityId))
+                                    {
+                                        var newChat = new Chat(messageSender, messageDate.Value, systemTime, messageText, file.EntityId);
+                                        chatList.Add(newChat);
+
+                                        if (chatList.Count > 9999)
+                                        {
+                                            _context.Chats.AddRange(chatList);
+                                            await _context.SaveChangesAsync();
+                                            chatList.Clear();
+                                        }
+                                    }
+                                }
+
+                                messageDate = date;
+                                messageSender = sender;
+                                messageText = message;
+                            }
+                        }
+                        else
+                        {
+                            //Keep adding the message text until a new line is avaliable.
+                            messageText = String.Concat(messageText, " \n ", message);
+                        }
+                    }
+                    _context.Chats.AddRange(chatList);
+                    await _context.SaveChangesAsync();
+
+                    _context.Uploads.Remove(file);
+                    await _context.SaveChangesAsync();
+                }
+            }
+            finally
+            {
+                semaphore.Release();
+            }
         }
     }
 }

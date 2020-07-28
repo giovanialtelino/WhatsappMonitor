@@ -39,6 +39,12 @@ namespace WhatsappMonitor.API.Controllers
             return await _repo.SearchEntityChatText(message, id);
         }
 
+        [HttpGet("search-date/{id}")]
+        public async Task<ActionResult<int>> SearchChat(int id, [FromQuery] string startDate)
+        {
+            return await _repo.SearchEntityChatTextByDate(id, startDate);
+        }
+
         [HttpGet("members/{id}")]
         public async Task<ActionResult<List<ParticipantDTO>>> GetChatParticipant(int id)
         {
@@ -49,6 +55,12 @@ namespace WhatsappMonitor.API.Controllers
         public async Task<ActionResult<List<ChatUploadDTO>>> GetChatUploadDates(int id)
         {
             return await _repo.GetChatUploadDate(id);
+        }
+
+        [HttpGet("awaiting-process/{id}")]
+        public async Task<ActionResult<List<Upload>>> GetUploadAwaiting(int id)
+        {
+            return await _repo.GetUploadAwaiting(id);
         }
 
         [HttpPut("update-name/{id}")]

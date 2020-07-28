@@ -57,7 +57,7 @@ namespace WhatsappMonitor.API.Controllers
         }
 
         [HttpPost("file/{id}")]
-        public async Task<int> OnPostUploadAsync(int id)
+        public async Task<int> OnPostUploadInternalAsync(int id)
         {
             var systemTime = DateTime.Now;
             var counter = 0;
@@ -65,22 +65,17 @@ namespace WhatsappMonitor.API.Controllers
             {
                 foreach (var file in HttpContext.Request.Form.Files)
                 {
-                    var path = Path.Combine(Path.GetTempFileName());
-                    using (var stream = new FileStream(path, FileMode.Create))
+                    counter++;
+                    var fileName = file.FileName;
+                    using (var memoryStream = new MemoryStream())
                     {
-                        await file.CopyToAsync(stream);
-                        String line;
-
-                        using (var sr = new StreamReader(path))
-                        {
-                            while ((line = sr.ReadLine()) != null)
-                            {
-                                counter = counter + (await _chat.CleanAddChat(line, id, systemTime));
-                            }
-                        }
+                        await file.CopyToAsync(memoryStream);
+                        var fileContent = memoryStream.ToArray();
+                        await _repo.UploadFile(id, systemTime, fileName, fileContent);
                     }
                 }
             }
+            _chat.ProcessEntityFiles();
             return counter;
         }
     }

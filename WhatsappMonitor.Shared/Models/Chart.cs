@@ -6,14 +6,9 @@ using System.Collections.Generic;
 
 namespace WhatsappMonitor.Shared.Models
 {
-    public class ChartDTO
-    {
-
-    }
-
     public class ChatPersonInfoDTO
     {
-        public string PersonName {get;set;}
+        public string PersonName { get; set; }
         public int MessageCounter { get; set; }
         public double MessagePercentage { get; set; }
         public int WordsCounter { get; set; }
