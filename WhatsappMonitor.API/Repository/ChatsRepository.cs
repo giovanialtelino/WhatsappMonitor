@@ -11,6 +11,8 @@ using System;
 using System.Globalization;
 using System.Text;
 using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace WhatsappMonitor.API.Repository
 {
@@ -22,8 +24,6 @@ namespace WhatsappMonitor.API.Repository
             _context = context;
         }
 
-        //Before adding must check if a equal message with the same date doesn't exist... 
-        //Will take some performance, but there is no UUID or similar to keep a single message
         private async Task<bool> MessageAlreadyExist(DateTime messageTime, string message, int entityId)
         {
             var result = await _context.Chats.FirstOrDefaultAsync(c => c.Message == message && c.MessageTime == messageTime && c.EntityId == entityId);
@@ -42,22 +42,37 @@ namespace WhatsappMonitor.API.Repository
             return await _context.Chats.Where(c => c.EntityId == id).OrderBy(c => c.EntityId).ToListAsync();
         }
 
-        public async Task<List<Chat>> GetAllChatsPagination(int id, int pagination)
+        public async Task<Tuple<PaginationDTO, List<Chat>>> GetAllChatsPagination(int id, int pagination, int take)
         {
+            var cleanTake = 25;
             var cleanPagination = 0;
             if (pagination >= 0) cleanPagination = pagination;
+            if (take >= 0 && take <= 100) cleanTake = take;
 
-            cleanPagination = cleanPagination - 50;
+            cleanPagination = cleanPagination - cleanTake;
 
             var chat = await _context.Chats.Where(c => c.EntityId == id).OrderByDescending(c => c.MessageTime).ToListAsync();
-            var result = chat.Skip(cleanPagination).Take(50).ToList();
-            return result;
+
+            var result = chat.Skip(cleanPagination).Take(cleanTake).ToList();
+
+            var allowNext = false;
+            var allowBack = false;
+
+            if (cleanPagination > 0) allowBack = true;
+            if ((cleanPagination + cleanTake) < chat.Count()) allowNext = true;
+
+            var pagesCounter = result.Count() / cleanTake;
+            var currentPage = cleanPagination / cleanTake;
+
+            var paginationDto = new PaginationDTO(cleanPagination, cleanTake, allowNext, allowBack, pagesCounter, currentPage);
+
+            return new Tuple<PaginationDTO, List<Chat>>(paginationDto, result);
         }
 
         public async Task<int> SearchEntityChatTextByDate(int id, string date)
         {
             var parsedDate = DateTime.Parse(date);
-            var chat = await _context.Chats.Where(c => c .EntityId == id && c.MessageTime >= parsedDate).OrderByDescending(c => c.MessageTime).CountAsync();
+            var chat = await _context.Chats.Where(c => c.EntityId == id && c.MessageTime >= parsedDate).OrderByDescending(c => c.MessageTime).CountAsync();
 
             return chat;
         }
@@ -75,10 +90,17 @@ namespace WhatsappMonitor.API.Repository
             return listChat;
         }
 
-        public async Task<List<Chat>> SearchEntityChatText(string text, int id)
+        public async Task<List<Chat>> SearchEntityChatText(string text, int id, int pagination, int take)
         {
+            var cleanTake = 25;
+            var cleanPagination = 0;
+            if (take >= 0 && take <= 100) cleanTake = take;
+            if (pagination >= 0) cleanPagination = pagination;
+
             var messages = await _context.Chats.Where(c => c.EntityId == id).OrderByDescending(c => c.MessageTime).ToListAsync();
-            return SearchChatText(text, messages);
+            var findText = SearchChatText(text, messages);
+            var result = findText.Skip(cleanPagination).Take(cleanTake).ToList();
+            return result;
         }
 
         public async Task<List<ParticipantDTO>> GetChatParticipants(int id)
@@ -164,17 +186,17 @@ namespace WhatsappMonitor.API.Repository
             return chatList;
         }
 
-       public async Task<List<Upload>> GetUploadAwaiting(int id)
-       {
-           var uploadList =await _context.Uploads.Where(e => e.EntityId == id).ToListAsync();
+        public async Task<List<Upload>> GetUploadAwaiting(int id)
+        {
+            var uploadList = await _context.Uploads.Where(e => e.EntityId == id).ToListAsync();
 
-           foreach (var item in uploadList)
-           {
-               item.FileContent = null;
-           }
+            foreach (var item in uploadList)
+            {
+                item.FileContent = null;
+            }
 
-           return uploadList;
-       }
+            return uploadList;
+        }
 
         public async Task DeleteDateChat(int entityId, ChatUploadDTO dto)
         {
@@ -367,6 +389,104 @@ namespace WhatsappMonitor.API.Repository
 
         private static SemaphoreSlim semaphore;
 
+        public async Task ProcessTxt(Upload file)
+        {
+
+            var systemTime = DateTime.Now;
+            var chatList = new List<Chat>();
+            var toString = Encoding.UTF8.GetString(file.FileContent);
+
+            string[] lines = toString.Split(
+                new[] { "\r\n", "\r", "\n" },
+                StringSplitOptions.None
+            );
+
+            //not a fan of this approach
+            var linesCounter = lines.Count() - 1;
+
+            var messageDate = ValidDate(lines[0]);
+            var messageSender = ValidSender(lines[0]);
+            var messageText = CleanMessage(lines[0]);
+
+            for (int i = 0; i < linesCounter; i++)
+            {
+                var date = ValidDate(lines[i]);
+                var sender = ValidSender(lines[i]);
+                var message = CleanMessage(lines[i]);
+
+                if (date != null)
+                {
+                    if (String.IsNullOrWhiteSpace(message) == false)
+                    {
+                        if (String.IsNullOrWhiteSpace(messageText) == false && String.IsNullOrWhiteSpace(messageSender) == false)
+                        {
+                            if (!await MessageAlreadyExist(messageDate.Value, messageText, file.EntityId))
+                            {
+                                var newChat = new Chat(messageSender, messageDate.Value, systemTime, messageText, file.EntityId);
+                                chatList.Add(newChat);
+
+                                if (chatList.Count > 9999)
+                                {
+                                    _context.Chats.AddRange(chatList);
+                                    await _context.SaveChangesAsync();
+                                    chatList.Clear();
+                                }
+                            }
+                        }
+
+                        messageDate = date;
+                        messageSender = sender;
+                        messageText = message;
+                    }
+                }
+                else
+                {
+                    //Keep adding the message text until a new line is avaliable.
+                    messageText = String.Concat(messageText, " \n ", message);
+                }
+            }
+            _context.Chats.AddRange(chatList);
+            await _context.SaveChangesAsync();
+
+            _context.Uploads.Remove(file);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task ProcessJson(Upload file)
+        {
+            var systemTime = DateTime.Now;
+            var toString = Encoding.UTF8.GetString(file.FileContent);
+            var chatList = new List<Chat>();
+            var jsonChatList = JsonSerializer.Deserialize<List<RootWhatsapp>>(toString);
+            var entityChat = await _context.Chats.Where(c => c.EntityId == file.EntityId).Select(c => new Tuple<string, DateTime>(c.Message, c.MessageTime)).ToListAsync();
+            var hashSet = new HashSet<Tuple<string, DateTime>>(entityChat);
+
+            //!await MessageAlreadyExist(tempDate, chat.MsgContent, file.EntityId)
+            foreach (var chat in jsonChatList)
+            {
+                var tempDate = DateTime.Parse(chat.Date);
+                if (!(hashSet.Contains(new Tuple<string, DateTime>(chat.MsgContent, tempDate))))
+                {
+                    var newChat = new Chat(chat.From, tempDate, systemTime, chat.MsgContent, file.EntityId);
+                    chatList.Add(newChat);
+
+                    if (chatList.Count > 5000)
+                    {
+                        _context.Chats.AddRange(chatList);
+                        await _context.SaveChangesAsync();
+                        chatList.Clear();
+                    }
+                }
+            }
+
+            _context.Chats.AddRange(chatList);
+            await _context.SaveChangesAsync();
+
+            _context.Uploads.Remove(file);
+            await _context.SaveChangesAsync();
+        }
+
+
         public async Task ProcessEntityFiles()
         {
             semaphore = new SemaphoreSlim(1, 1);
@@ -376,67 +496,18 @@ namespace WhatsappMonitor.API.Repository
             try
             {
                 var fileList = await _context.Uploads.AsNoTracking().ToListAsync();
-                var systemTime = DateTime.Now;
+
 
                 foreach (var file in fileList)
                 {
-                    var chatList = new List<Chat>();
-                    var toString = Encoding.UTF8.GetString(file.FileContent);
-
-                    string[] lines = toString.Split(
-                        new[] { "\r\n", "\r", "\n" },
-                        StringSplitOptions.None
-                    );
-
-                    //not a fan of this approach
-                    var linesCounter = lines.Count() - 1;
-
-                    var messageDate = ValidDate(lines[0]);
-                    var messageSender = ValidSender(lines[0]);
-                    var messageText = CleanMessage(lines[0]);
-
-                    for (int i = 0; i < linesCounter; i++)
+                    if (file.FileName.EndsWith("txt"))
                     {
-                        var date = ValidDate(lines[i]);
-                        var sender = ValidSender(lines[i]);
-                        var message = CleanMessage(lines[i]);
-
-                        if (date != null)
-                        {
-                            if (String.IsNullOrWhiteSpace(message) == false)
-                            {
-                                if (String.IsNullOrWhiteSpace(messageText) == false && String.IsNullOrWhiteSpace(messageSender) == false)
-                                {
-                                    if (!await MessageAlreadyExist(messageDate.Value, messageText, file.EntityId))
-                                    {
-                                        var newChat = new Chat(messageSender, messageDate.Value, systemTime, messageText, file.EntityId);
-                                        chatList.Add(newChat);
-
-                                        if (chatList.Count > 9999)
-                                        {
-                                            _context.Chats.AddRange(chatList);
-                                            await _context.SaveChangesAsync();
-                                            chatList.Clear();
-                                        }
-                                    }
-                                }
-
-                                messageDate = date;
-                                messageSender = sender;
-                                messageText = message;
-                            }
-                        }
-                        else
-                        {
-                            //Keep adding the message text until a new line is avaliable.
-                            messageText = String.Concat(messageText, " \n ", message);
-                        }
+                        await ProcessTxt(file);
                     }
-                    _context.Chats.AddRange(chatList);
-                    await _context.SaveChangesAsync();
-
-                    _context.Uploads.Remove(file);
-                    await _context.SaveChangesAsync();
+                    else if (file.FileName.EndsWith("json"))
+                    {
+                        await ProcessJson(file);
+                    }
                 }
             }
             finally

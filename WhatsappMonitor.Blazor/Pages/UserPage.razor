@@ -14,24 +14,16 @@ else
      <div style="justify-content: center;" class="form-row">
         <h2>@entity.Name</h2>
     </div>
-    <hr />
+    
+    <hr style="margin-top: 0px;" />
 
     <div style="justify-content: center;" class="form-row">
-        <div class="form-group col-md-2">
-            <button type="button" class="btn btn-primary" @onclick="(() => ChangeSelected(0))">Chat Info</button>
-        </div>
-        <div class="form-group col-md-2">
-            <button type="button" class="btn btn-primary" @onclick="(() => ChangeSelected(1))">Chat Reader</button>
-        </div>
-        <div class="form-group col-md-2">
-            <button type="button" class="btn btn-primary" @onclick="(() => ChangeSelected(2))">Chat Searcher</button>
-        </div>
-        <div class="form-group col-md-2">
-            <button type="button" class="btn btn-primary" @onclick="(() => ChangeSelected(3))">Chat
-                Participants</button>
-        </div>
-        <div class="form-group col-md-2">
-            <button type="button" class="btn btn-primary" @onclick="(() => ChangeSelected(4))">Upload Chats</button>
+        <div class="btn-group" role="group" aria-label="Menu bar">
+            <button type="button" class="@GetButtonClass(0)" @onclick="(() => ChangeSelected(0))">Chat Info</button>
+            <button type="button" class="@GetButtonClass(1)" @onclick="(() => ChangeSelected(1))">Chat Reader</button>
+            <button type="button" class="@GetButtonClass(2)" @onclick="(() => ChangeSelected(2))">Chat Searcher</button>
+            <button type="button" class="@GetButtonClass(3)" @onclick="(() => ChangeSelected(3))">Chat Participants</button>
+            <button type="button" class="@GetButtonClass(4)" @onclick="(() => ChangeSelected(4))">Upload Chats</button>
         </div>
     </div>
 }
@@ -75,7 +67,7 @@ else if(selected == 4)
     [Parameter]
     public String entityId { get; set; }
     public Entity entity { get; set; }
-    public int selected {get;set;}
+    public int selected { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -90,5 +82,17 @@ else if(selected == 4)
     public void ChangeSelected(int i)
     {
         selected = i;
+    }
+
+    public String GetButtonClass(int id)
+    {
+        if (id == selected)
+        {
+            return "btn btn-success";
+        }
+        else
+        {
+            return "btn btn-secondary";
+        }
     }
 }

@@ -88,15 +88,15 @@ namespace WhatsappMonitor.Blazor.Services
             var result = await _httpClient.DeleteAsync($"/api/chats/delete-name/{id}/{name}");
         }
 
-        public async Task<List<Chat>> SearchChatWord(int id, string word)
+        public async Task<List<Chat>> SearchChatWord(int id, string word, int pag, int take)
         {
-            var result = await _httpClient.GetFromJsonAsync<List<Chat>>($"/api/chats/search/{id}/{word}");
+            var result = await _httpClient.GetFromJsonAsync<List<Chat>>($"/api/chats/search/{id}/{word}/{pag}/{take}");
             return result;
         }
 
-        public async Task<List<Chat>> LoadChat(int id, int pag)
+        public async Task<Tuple<PaginationDTO, List<Chat>>> LoadChat(int id, int pag, int take)
         {
-            var result = await _httpClient.GetFromJsonAsync<List<Chat>>($"/api/chats/load/{id}/{pag}");
+            var result = await _httpClient.GetFromJsonAsync<Tuple<PaginationDTO, List<Chat>>>($"/api/chats/load/{id}/{pag}/{take}");
             return result;
         }
 

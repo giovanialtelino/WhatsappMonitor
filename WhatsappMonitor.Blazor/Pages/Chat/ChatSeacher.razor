@@ -16,6 +16,8 @@
     </div>
 </div>
 
+<hr>
+
 @if(chats == null)
 {
 <p>Seach for a word.</p>
@@ -31,10 +33,12 @@ chats = "@chats" />
     public int Id { get; set; }
     List<Chat> chats;
     string searchChat = "";
+    int skip = 0;
+    int take = 25;
 
     public async Task SearchChat()
     {
-        chats = await apiServices.SearchChatWord(Id, searchChat);
+        chats = await apiServices.SearchChatWord(Id, searchChat, skip, take);
     }
      
 }

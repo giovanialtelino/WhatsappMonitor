@@ -59,4 +59,23 @@ namespace WhatsappMonitor.Shared.Models
         public DateTime? From { get; set; }
         public DateTime? Until { get; set; }
     }
+
+    public class PaginationDTO
+    {
+        public int Pagination { get; set; }
+        public int Take { get; set; }
+        public bool AllowNext { get; set; }
+        public bool AllowBack { get; set; }
+        public int TotalPages { get; set; }
+        public int CurrentPage {get;set;}
+        public PaginationDTO(int pagination, int take, bool allowNext, bool allowBack, int totalPages, int currentPage)
+        {
+            Pagination = pagination;
+            Take = take;
+            AllowNext = allowNext;
+            AllowBack = allowBack;
+            TotalPages = totalPages;
+            CurrentPage = currentPage;
+        }
+    }
 }

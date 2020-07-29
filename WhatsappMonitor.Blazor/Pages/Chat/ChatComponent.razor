@@ -2,9 +2,10 @@
 
 @using WhatsappMonitor.Shared.Models;
 
+<ul class="scrollable-chat-list" style="padding-left: 0px;">
 @foreach (var chat in chats)
 {
-<li class="list-group-item short-padding">
+<li class="list-group-item short-padding li-hoverable">
    <div class="form-row">
         <div class="col-2 no-margin-td">
            <p class="no-margin-td">@chat.PersonName</p>
@@ -18,6 +19,7 @@
    </div>
 </li>
 }
+</ul>
 
 @code {
     [Parameter]

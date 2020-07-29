@@ -56,6 +56,7 @@ namespace WhatsappMonitor.API.Controllers
             await _repo.DeleteEntity(id);
         }
 
+
         [HttpPost("file/{id}")]
         public async Task<int> OnPostUploadInternalAsync(int id)
         {
@@ -67,6 +68,7 @@ namespace WhatsappMonitor.API.Controllers
                 {
                     counter++;
                     var fileName = file.FileName;
+
                     using (var memoryStream = new MemoryStream())
                     {
                         await file.CopyToAsync(memoryStream);
@@ -78,5 +80,12 @@ namespace WhatsappMonitor.API.Controllers
             _chat.ProcessEntityFiles();
             return counter;
         }
+
+        [HttpGet("process")]
+        public async Task ProcessEntityFiles()
+        {
+            await _chat.ProcessEntityFiles();
+        }
+
     }
 }

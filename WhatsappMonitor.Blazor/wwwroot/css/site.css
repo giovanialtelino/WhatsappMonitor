@@ -205,3 +205,16 @@ padding-bottom: 0.25rem;
 padding-left: 0.5rem;
 padding-right: 0.5rem;
 }
+
+.scrollable-chat-list
+{
+    height:35rem;
+    overflow:hidden; 
+    overflow-y:scroll;
+}
+
+.li-hoverable:hover
+{
+background-color: whitesmoke;
+
+}

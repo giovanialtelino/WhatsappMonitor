@@ -27,16 +27,16 @@ namespace WhatsappMonitor.API.Controllers
             return await _repo.GetAllChatsEntity(id);
         }
 
-        [HttpGet("load/{id}/{pagination}")]
-        public async Task<ActionResult<List<Chat>>> GetChatsPagination(int id, int pagination)
+        [HttpGet("load/{id}/{pagination}/{take}")]
+        public async Task<ActionResult <Tuple<PaginationDTO, List<Chat>>>> GetChatsPagination(int id, int pagination, int take)
         {
-            return await _repo.GetAllChatsPagination(id, pagination);
+            return await _repo.GetAllChatsPagination(id, pagination, take);
         }
 
-        [HttpGet("search/{id}/{message}")]
-        public async Task<ActionResult<List<Chat>>> SearchChat(string message, int id)
+        [HttpGet("search/{id}/{message}/{pagination}/{take}")]
+        public async Task<ActionResult<List<Chat>>> SearchChat(int id, string message, int pagination, int take)
         {
-            return await _repo.SearchEntityChatText(message, id);
+            return await _repo.SearchEntityChatText(message, id, pagination, take);
         }
 
         [HttpGet("search-date/{id}")]

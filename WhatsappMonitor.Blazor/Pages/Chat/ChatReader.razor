@@ -9,37 +9,50 @@
 
 @if(chats == null)
 {
-<p>Loading for a word.</p>
+<p>Loading chats...</p>
 }
 else
 {
+
 <ChatComponent
 chats = "@chats" />
 
-<div class="form-row">
-    <div class="col-2">
-        <button type="button" class="btn btn-primary" > 
-            <label>&nbsp;</label>
-            <span class="oi oi-caret-left" aria-hidden="true" @onclick="BackChat"></span>
-            &nbsp;
-        </button>
-    </div>
-    <div class="col-2">
-        <label>&nbsp;</label>
-        <button type="button" class="btn btn-primary" > 
-            <span class="oi oi-caret-right" aria-hidden="true" @onclick="NextChat"></span>
-            
-        </button>
-    </div>
-
-    <div class="col-4"    >
-<label>Jump to Date</label>
-<input type="date" @bind="@dateJump" class="form-control">
+<ul>
+    <div class="form-group row" style="justify-content: start;">
+        <div class="col-2">
+            <div class="form-group row">
+                <label for="inputEmail3" class="col-form-label col-5">@currentPage / @totalPages</label>
+                <div class="btn-group " role="group" aria-label="Menu bar">
+                    <button type="button" class="btn btn-primary" @onclick="BackChat" disabled="@allowBack">
+                        <span class="oi oi-caret-left" aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="btn btn-primary" @onclick="NextChat" disabled="@allowNext">
+                        <span class="oi oi-caret-right" aria-hidden="true"></span>
+                    </button>
+                </div>
+            </div>
         </div>
-           <button type="button" class="btn btn-primary" > 
-            <span class="oi oi-target" aria-hidden="true" @onclick="JumpDate"></span>            
-        </button>
-</div>
+
+        <div class="col-3">
+            <div class="form-group row">
+                <label for="inputEmail3" class="col-form-label col-5">Jump to Date</label>
+                <input type="date" @bind="@dateJump" class="form-control col-5">
+                <button type="button" class="btn btn-primary col-2" @onclick="JumpDate">
+                    <span class="oi oi-target" aria-hidden="true"></span>
+                </button>
+            </div>
+        </div>
+
+        <div class="col-2">
+            <div class="form-group row">
+                <label for="inputEmail3" class="col-form-label col-9">Numer of chats for next page</label>
+                <input type="number" @bind="@take" class="form-control col-3">
+            </div>
+        </div>
+    </div>
+</ul>
+
+
 }
 
 @code {
@@ -48,37 +61,47 @@ chats = "@chats" />
     List<Chat> chats;
     int skip = 0;
     DateTime dateJump;
+    int take = 25;
+    int totalPages = 0;
+    int currentPage = 0;
+    bool allowBack = false;
+    bool allowNext = false;
 
-     protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
+        dateJump = DateTime.Now;
         await LoadChat();
     }
 
     public async Task LoadChat()
     {
-        chats = await apiServices.LoadChat(Id, skip);
-        skip = skip + chats.Count();
+        var result = await apiServices.LoadChat(Id, skip, take);
+        chats = result.Item2;
+
+        var pagination = result.Item1;
+
+        skip = pagination.Pagination;
+        take = pagination.Take;
+        totalPages = pagination.TotalPages;
+        allowBack = pagination.AllowNext;
+        allowNext = pagination.AllowBack;
+        currentPage = pagination.CurrentPage;
     }
 
     public async Task BackChat()
     {
-        chats = null;
-        skip = skip - 50;
-                        await LoadChat();
-                        
-            }
+        skip = skip - take;
+        await LoadChat();
+    }
 
     public async Task NextChat()
     {
-        chats = null;
-                skip = skip + 50;
-await LoadChat();
-
-    }     
+        skip = skip + take;
+        await LoadChat();
+    }
 
     public async Task JumpDate()
     {
-        chats = null;
         skip = await apiServices.JumpChatToDate(Id, dateJump);
         await LoadChat();
     }

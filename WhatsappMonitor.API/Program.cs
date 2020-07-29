@@ -18,15 +18,16 @@ namespace WhatsappMonitor.API
             StartDbContext.StartDb(ctx);
 
             CreateHostBuilder(args).Build().Run();
-
-
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseStartup<Startup>();
+                    webBuilder
+                    .UseStartup<Startup>()
+                    .UseKestrel(o =>
+                    o.Limits.MaxRequestBodySize = 209715200);
                 });
     }
 }
