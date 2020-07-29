@@ -77,6 +77,7 @@ namespace WhatsappMonitor.API.Controllers
                     }
                 }
             }
+
             _chat.ProcessEntityFiles();
             return counter;
         }

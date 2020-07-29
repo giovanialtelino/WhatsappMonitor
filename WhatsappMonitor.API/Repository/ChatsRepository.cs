@@ -113,6 +113,7 @@ namespace WhatsappMonitor.API.Repository
             foreach (var user in users)
             {
                 var firstMessage = await _context.Chats.Where(c => c.EntityId == id && c.PersonName == user).MinAsync(c => c.MessageTime);
+                var lastMessage = await _context.Chats.Where(c => c.EntityId == id && c.PersonName == user).MaxAsync(c => c.MessageTime);
                 var messages = await _context.Chats.Where(c => c.EntityId == id && c.PersonName == user).Select(c => c.Message).ToListAsync();
                 var messageCounter = messages.Count();
                 var wordCounter = 0;
@@ -129,6 +130,7 @@ namespace WhatsappMonitor.API.Repository
                 {
                     MessageCounter = messageCounter,
                     FirstMessage = firstMessage,
+                    LastMessage = lastMessage,
                     PersonName = user,
                     FixedName = user,
                     WordsCounter = wordCounter
@@ -141,7 +143,7 @@ namespace WhatsappMonitor.API.Repository
                 item.WordsCounterPercentage = (item.WordsCounter * 100) / totalWords;
             }
 
-            return participants.OrderByDescending(c => c.MessageCounterPercentage).ToList();
+            return participants.OrderBy(c => c.PersonName).ToList();
         }
 
         public async Task UpdateNameChat(int entityId, ParticipantDTO participant)
@@ -395,6 +397,8 @@ namespace WhatsappMonitor.API.Repository
             var systemTime = DateTime.Now;
             var chatList = new List<Chat>();
             var toString = Encoding.UTF8.GetString(file.FileContent);
+            var entityChat = await _context.Chats.Where(c => c.EntityId == file.EntityId).Select(c => new Tuple<string, DateTime>(c.Message, c.MessageTime)).ToListAsync();
+            var hashSet = new HashSet<Tuple<string, DateTime>>(entityChat);
 
             string[] lines = toString.Split(
                 new[] { "\r\n", "\r", "\n" },
@@ -420,8 +424,10 @@ namespace WhatsappMonitor.API.Repository
                     {
                         if (String.IsNullOrWhiteSpace(messageText) == false && String.IsNullOrWhiteSpace(messageSender) == false)
                         {
-                            if (!await MessageAlreadyExist(messageDate.Value, messageText, file.EntityId))
+
+                            if (!(hashSet.Contains(new Tuple<string, DateTime>(messageText, messageDate.Value)))) { }
                             {
+
                                 var newChat = new Chat(messageSender, messageDate.Value, systemTime, messageText, file.EntityId);
                                 chatList.Add(newChat);
 
@@ -495,11 +501,13 @@ namespace WhatsappMonitor.API.Repository
 
             try
             {
-                var fileList = await _context.Uploads.AsNoTracking().ToListAsync();
-
+                var fileList = await _context.Uploads.ToListAsync();
 
                 foreach (var file in fileList)
                 {
+                    file.InProcess = "Yes";
+                    await _context.SaveChangesAsync();
+
                     if (file.FileName.EndsWith("txt"))
                     {
                         await ProcessTxt(file);
@@ -507,6 +515,11 @@ namespace WhatsappMonitor.API.Repository
                     else if (file.FileName.EndsWith("json"))
                     {
                         await ProcessJson(file);
+                    }
+                    else
+                    {
+                        _context.Uploads.Remove(file);
+                        await _context.SaveChangesAsync();
                     }
                 }
             }

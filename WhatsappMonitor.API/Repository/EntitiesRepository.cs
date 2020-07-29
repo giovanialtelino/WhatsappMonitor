@@ -77,7 +77,8 @@ namespace WhatsappMonitor.API.Repository
                 FileName = fileName,
                 CreationDate = uploadTime,
                 FileContent = fileContent,
-                EntityId = entityId
+                EntityId = entityId,
+                InProcess = "No"
             };
 
             _context.Uploads.Add(newUpload);

@@ -12,6 +12,25 @@
 }
 else
 {
+<div class="form-row">
+<div class="form-group col-md-3">
+                <label for="">Order By</label>
+                <select @onchange="@OrderList">
+                    <option value="name">Name</option>
+                    <option value="firstMessage">First Message</option>
+                    <option value="lastMessage">Last Message</option>
+                    <option value="messageP">Message %</option>
+                    <option value="wordP">Word %</option>
+                </select>
+            </div>
+            <div class="form-group col-md-3">
+                <label for="">Order Type</label>
+                <select @onchange="@OrderType">
+                    <option value="crescent">Crescent</option>
+                    <option value="decrescente">Decrescent</option>
+                </select>
+            </div>
+</div>
 @foreach (var i in users)
 {
 <li class="list-group-item">
@@ -29,6 +48,10 @@ else
             <div class="form-group col-md-2">
                 <label for="">First Message</label>
                 <input class="form-control" type="text" @bind="i.FirstMessage">
+            </div>
+             <div class="form-group col-md-2">
+                <label for="">Last Message</label>
+                <input class="form-control" type="text" @bind="i.LastMessage">
             </div>
             <div class="form-group col-md-2">
                 <label for="">Message Counter</label>
@@ -57,6 +80,8 @@ else
     public int Id { get; set; }
     List<ParticipantDTO> users;
 
+    string orderType = "crescent";
+    string orderList = "name";
     protected override async Task OnInitializedAsync()
     {
         await GetParticipants();
@@ -75,5 +100,79 @@ else
     public async Task DeletePersonName(string name)
     {
         await apiServices.DeleteChatPersonName(Id, name);
+    }
+
+    public void OrderList(ChangeEventArgs e)
+    {
+        orderList = e.Value.ToString();
+        OrderUsers();
+    }
+
+    public void OrderType(ChangeEventArgs e)
+    {
+        orderType = e.Value.ToString();
+        OrderUsers();
+    }
+
+    public void OrderUsers()
+    {
+        switch (orderList)
+        {
+            case "firstMessage":
+                if (orderType == "crescent")
+                {
+                    users = users.OrderBy(c => c.FirstMessage).ToList();
+                }
+                else
+                {
+                    users = users.OrderByDescending(c => c.FirstMessage).ToList();
+                }
+                break;
+
+            case "lastMessage":
+                if (orderType == "crescent")
+                {
+                    users = users.OrderBy(c => c.LastMessage).ToList();
+                }
+                else
+                {
+                    users = users.OrderByDescending(c => c.LastMessage).ToList();
+                }
+                break;
+
+            case "messageP":
+                if (orderType == "crescent")
+                {
+                    users = users.OrderBy(c => c.MessageCounterPercentage).ToList();
+                }
+                else
+                {
+                    users = users.OrderByDescending(c => c.MessageCounterPercentage).ToList();
+                }
+                break;
+
+            case "wordP":
+                if (orderType == "crescent")
+                {
+                    users = users.OrderBy(c => c.WordsCounterPercentage).ToList();
+                }
+                else
+                {
+                    users = users.OrderByDescending(c => c.WordsCounterPercentage).ToList();
+                }
+                break;
+
+            default:
+                if (orderType == "crescent")
+                {
+                    users = users.OrderBy(c => c.PersonName).ToList();
+                }
+                else
+                {
+                    users = users.OrderByDescending(c => c.PersonName).ToList();
+                }
+
+                break;
+        }
     }
 }

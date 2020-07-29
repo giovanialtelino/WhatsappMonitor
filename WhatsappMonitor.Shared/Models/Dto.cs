@@ -21,6 +21,11 @@ namespace WhatsappMonitor.Shared.Models
         public DateTime FirstMessage { get; set; }
 
         [Required]
+        [DisplayName("Last Message")]
+        [JsonPropertyName("lastMessage")]
+        public DateTime LastMessage { get; set; }
+
+        [Required]
         [DisplayName("Message Counter")]
         [JsonPropertyName("messageCounter")]
         public int MessageCounter { get; set; }
