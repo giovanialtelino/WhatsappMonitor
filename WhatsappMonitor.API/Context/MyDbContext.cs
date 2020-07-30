@@ -47,5 +47,6 @@ namespace WhatsappMonitor.API.Context
         public DbSet<Entity> Entities { get; set; }
         public DbSet<Chat> Chats { get; set; }
         public DbSet<Upload> Uploads { get; set; }
+        public DbSet<User> Users {get;set;}
     }
 }

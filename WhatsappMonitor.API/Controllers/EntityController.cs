@@ -10,10 +10,12 @@ using WhatsappMonitor.API.Context;
 using Microsoft.EntityFrameworkCore;
 using WhatsappMonitor.API.Repository;
 using System.IO;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WhatsappMonitor.API.Controllers
 {
     [Route("api/[controller]")]
+    [Authorize]
     [ApiController]
     public class EntitiesController : Controller
     {

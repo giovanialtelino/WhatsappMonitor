@@ -8,10 +8,13 @@ using WhatsappMonitor.Shared.Models;
 using WhatsappMonitor.API.Context;
 using Microsoft.EntityFrameworkCore;
 using WhatsappMonitor.API.Repository;
+using Microsoft.AspNetCore.Authorization;
+
 
 namespace WhatsappMonitor.API.Controllers
 {
     [Route("api/[controller]")]
+    [Authorize]
     [ApiController]
     public class ChatsController : Controller
     {
