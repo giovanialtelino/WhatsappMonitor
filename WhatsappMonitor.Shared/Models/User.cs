@@ -11,22 +11,41 @@ namespace WhatsappMonitor.Shared.Models
         [JsonIgnore]
         public string Password { get; set; }
         [JsonIgnore]
-        public RefreshToken RefreshToken { get; set; }
+        public List<RefreshToken> RefreshToken { get; set; }
+        public User(string username, string password)
+        {
+            Username = username;
+            Password = password;
+        }
+        public User(string username, string password, RefreshToken refreshToken)
+        {
+            Username = username;
+            Password = password;
+            RefreshToken.Add(refreshToken);
+        }
     }
 
     public class RefreshToken
     {
         [JsonIgnore]
-        public int Id { get; set; }
+        public int RefreshTokenId { get; set; }
         public string Token { get; set; }
-        public DateTime Expires { get; set; }
-        public bool IsExpired => DateTime.UtcNow >= Expires;
         public DateTime Created { get; set; }
-        public string CreatedByIp { get; set; }
-        public DateTime? Revoked { get; set; }
-        public string RevokedByIp { get; set; }
-        public string ReplacedByToken { get; set; }
-        public bool IsActive => Revoked == null && !IsExpired;
+        public bool Valid { get; set; }
+        public User User { get; set; }
+        public int UserId { get; set; }
+
+        public RefreshToken(string token, DateTime created)
+        {
+            Token = token;
+            Created = created;
+            Valid = true;
+        }
+
+        public void MakeTokenInvalid()
+        {
+            this.Valid = false;
+        }
     }
 
 

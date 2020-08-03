@@ -1,13 +1,7 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using WhatsappMonitor.Shared.Models;
-using WhatsappMonitor.API.Context;
-using Microsoft.EntityFrameworkCore;
-using WhatsappMonitor.API.Repository;
 using Microsoft.AspNetCore.Authorization;
 using WhatsappMonitor.API.Services;
 using WhatsappMonitor.Shared.Models.AuthAuto;
@@ -27,57 +21,58 @@ namespace WhatsappMonitor.API.Controllers
 
         [AllowAnonymous]
         [HttpPost("auth")]
-        public async Task<AuthenticateResponse> Authenticate([FromBody] AuthenticateRequest auth)
+        public async Task<ActionResult<AuthenticateResponse>> Authenticate([FromBody] AuthenticateRequest auth)
         {
-            var response = await _userService.Authenticate(auth, ipAddress());
+            var response = await _userService.Authenticate(auth);
+
+            if (response == null) return BadRequest(new { message = "Password or user are invalid" });
 
             setTokenCookie(response.RefreshToken);
             return response;
         }
 
         [AllowAnonymous]
-        [HttpPost("refresh")]
-        public async Task<AuthenticateResponse> Refresh()
+        [HttpPost("refresh/{id}")]
+        public async Task<ActionResult<AuthenticateResponse>> Refresh(int id)
         {
             var refreshToken = Request.Cookies["refreshToken"];
-            var response = await _userService.RefreshToken(refreshToken, ipAddress());
+            var response = await _userService.RefreshToken(id, refreshToken);
+
+            if (response == null) return BadRequest(new { message = "Refresh token or user are invalid, login again" });
 
             setTokenCookie(response.RefreshToken);
 
             return response;
         }
 
-        [HttpPost("revoke-token")]
-        public async Task<string> RevokeToken([FromBody] RevokeTokenRequest revoke)
+        [HttpPost("revoke-token/{id}")]
+        public async Task<ActionResult<string>> RevokeToken([FromBody] RevokeTokenRequest stringToken, int id)
         {
-            var token = revoke.Token ?? Request.Cookies["refreshToken"];
+            if(string.IsNullOrWhiteSpace(stringToken.Token)) return BadRequest(new {message = "No refresh token provided"});
 
-            var response = await _userService.RevokeToken(token, ipAddress());
+            var response = await _userService.RevokeToken(id, stringToken.Token);
 
-            if (response)
-            {
-                return "Token revoked";
-            }
-            else
-            {
-                return "Error while revoking token";
-            }
+            if (response == false) return BadRequest(new { message = "Error while revoking token" });
+            return "Token revoked";
         }
 
         [AllowAnonymous]
         [HttpPost("register")]
-        public async Task<AuthenticateResponse> RegisterUser([FromBody] AuthenticateRequest user)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<AuthenticateResponse>> RegisterUser([FromBody] AuthenticateRequest user)
         {
             var registerUser = await _userService.RegisterUser(user);
+
+            if (registerUser == null) return BadRequest(new { message = "There is already a user registered" });
 
             var newAuth = new AuthenticateRequest();
             newAuth.Username = registerUser.Username;
             newAuth.Password = registerUser.Password;
 
-            var auth = await _userService.Authenticate(newAuth, ipAddress());
+            var auth = await _userService.Authenticate(newAuth);
 
             return auth;
-
         }
 
         private void setTokenCookie(string token)
@@ -85,18 +80,9 @@ namespace WhatsappMonitor.API.Controllers
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Expires = DateTime.UtcNow.AddDays(7)
+                Expires = DateTime.UtcNow.AddYears(10)
             };
             Response.Cookies.Append("refreshToken", token, cookieOptions);
         }
-
-        private string ipAddress()
-        {
-            if (Request.Headers.ContainsKey("X-Forwarded-For"))
-                return Request.Headers["X-Forwarded-For"];
-            else
-                return HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-        }
-
     }
 }

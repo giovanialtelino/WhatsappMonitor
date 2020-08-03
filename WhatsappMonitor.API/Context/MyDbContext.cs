@@ -42,11 +42,20 @@ namespace WhatsappMonitor.API.Context
                 entity.HasIndex(e => e.FileName);
                 entity.Property(e => e.UploadId).ValueGeneratedOnAdd();
             });
+
+            modelbuilder.Entity<User>().ToTable("User");
+            modelbuilder.Entity<User>(entity =>
+            {
+                entity.HasKey(e => e.UserId);
+                entity.Property(e => e.UserId).ValueGeneratedNever();
+                entity.HasMany(e => e.RefreshToken);
+            });
         }
 
         public DbSet<Entity> Entities { get; set; }
         public DbSet<Chat> Chats { get; set; }
         public DbSet<Upload> Uploads { get; set; }
-        public DbSet<User> Users {get;set;}
+        public DbSet<User> Users { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
     }
 }

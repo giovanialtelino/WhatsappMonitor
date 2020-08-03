@@ -20,14 +20,11 @@ namespace WhatsappMonitor.API.Services
 {
     public interface IUserService
     {
-        Task<AuthenticateResponse> Authenticate(AuthenticateRequest model, string ipAddress);
+        Task<AuthenticateResponse> Authenticate(AuthenticateRequest model);
 
-        Task<AuthenticateResponse> RefreshToken(string token, string ipAddress);
+        Task<AuthenticateResponse> RefreshToken(int userId, string token);
 
-        Task<bool> RevokeToken(string token, string ipAddress);
-        Task<List<User>> GetAll();
-        Task<User> GetById(int id);
-
+        Task<bool> RevokeToken(int userId, string token);
         Task<User> RegisterUser(AuthenticateRequest user);
     }
 
@@ -42,36 +39,45 @@ namespace WhatsappMonitor.API.Services
             _appSettings = appSettings.Value;
         }
 
-        public async Task<AuthenticateResponse> Authenticate(AuthenticateRequest model, string ipAddress)
+        public async Task<AuthenticateResponse> Authenticate(AuthenticateRequest model)
         {
             var user = await _context.Users.SingleOrDefaultAsync(e => e.Username == model.Username && e.Password == model.Password);
 
             if (user == null) return null;
 
             var jwtToken = generateJwtToken(user);
-            var refreshToken = generateRefreshToken(ipAddress);
 
-            user.RefreshToken = refreshToken;
+            var newRefreshToken = generateRefreshToken();
+
+            var refreshTokens = await _context.RefreshTokens.Where(e => e.UserId == user.UserId).ToListAsync();
+
+            foreach (var token in refreshTokens)
+            {
+                token.MakeTokenInvalid();
+            }
+
+            _context.RefreshTokens.Add(newRefreshToken);
             await _context.SaveChangesAsync();
 
-            return new AuthenticateResponse(user, jwtToken, refreshToken.Token);
+            return new AuthenticateResponse(user, jwtToken, newRefreshToken.Token);
         }
 
-        public async Task<AuthenticateResponse> RefreshToken(string token, string ipAddress)
+        public async Task<AuthenticateResponse> RefreshToken(int userId, string tokenString)
         {
-            var user = await _context.Users.SingleOrDefaultAsync(u => u.RefreshToken.Token == token);
+            var user = await _context.Users.Include(r => r.RefreshToken).SingleOrDefaultAsync(u => u.UserId == userId);
+            var refreshToken = await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Token == tokenString && t.UserId == userId && t.Valid == true);
 
             if (user == null) return null;
+            if (refreshToken == null) return null;
 
-            var refreshToken = user.RefreshToken;
+            var newRefreshToken = generateRefreshToken();
 
-            if (!refreshToken.IsActive) return null;
+            foreach (var token in user.RefreshToken)
+            {
+                token.MakeTokenInvalid();
+            }
 
-            var newRefreshToken = generateRefreshToken(ipAddress);
-            refreshToken.Revoked = DateTime.Now;
-            refreshToken.RevokedByIp = ipAddress;
-            refreshToken.ReplacedByToken = newRefreshToken.Token;
-            user.RefreshToken = newRefreshToken;
+            _context.RefreshTokens.Add(newRefreshToken);
             await _context.SaveChangesAsync();
 
             var jwtToken = generateJwtToken(user);
@@ -79,26 +85,18 @@ namespace WhatsappMonitor.API.Services
             return new AuthenticateResponse(user, jwtToken, newRefreshToken.Token);
         }
 
-        public async Task<bool> RevokeToken(string token, string ipAddress)
+        public async Task<bool> RevokeToken(int userId, string tokenString)
         {
-            var user = await _context.Users.SingleOrDefaultAsync(e => e.RefreshToken.Token == token);
+            var user = await _context.Users.Include(r => r.RefreshToken).SingleOrDefaultAsync(u => u.UserId == userId);
+            var refreshToken = await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Token == tokenString && t.UserId == userId && t.Valid == true);
 
             if (user == null) return false;
+            if (refreshToken == null) return false;
 
-            var refreshToken = user.RefreshToken;
-
-            if (!refreshToken.IsActive) return false;
-
-            refreshToken.Revoked = DateTime.UtcNow;
-            refreshToken.RevokedByIp = ipAddress;
+            refreshToken.MakeTokenInvalid();
             await _context.SaveChangesAsync();
 
             return true;
-        }
-
-        public async Task<List<User>> GetAll()
-        {
-            return await _context.Users.ToListAsync();
         }
 
         private async Task<bool> AllowNewUser()
@@ -119,9 +117,7 @@ namespace WhatsappMonitor.API.Services
         {
             if (await AllowNewUser() == true)
             {
-                var newUser = new User();
-                newUser.Password = user.Password;
-                newUser.Username = user.Username;
+                var newUser = new User(user.Username, user.Password);
                 newUser.UserId = 0;
 
                 _context.Users.Add(newUser);
@@ -133,11 +129,6 @@ namespace WhatsappMonitor.API.Services
             {
                 return null;
             }
-        }
-
-        public async Task<User> GetById(int id)
-        {
-            return await _context.Users.FirstOrDefaultAsync(e => e.UserId == id);
         }
 
         private string generateJwtToken(User user)
@@ -158,19 +149,14 @@ namespace WhatsappMonitor.API.Services
             return tokenHandler.WriteToken(token);
         }
 
-        private RefreshToken generateRefreshToken(string ipAddress)
+        private RefreshToken generateRefreshToken()
         {
             using (var rng = new RNGCryptoServiceProvider())
             {
                 var randomBytes = new byte[64];
                 rng.GetBytes(randomBytes);
-                return new RefreshToken
-                {
-                    Token = Convert.ToBase64String(randomBytes),
-                    Expires = DateTime.UtcNow.AddYears(10),
-                    Created = DateTime.UtcNow,
-                    CreatedByIp = ipAddress
-                };
+                var token = Convert.ToBase64String(randomBytes);
+                return new RefreshToken(token, DateTime.UtcNow);
             }
         }
     }
