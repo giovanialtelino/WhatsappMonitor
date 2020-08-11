@@ -14,12 +14,29 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace WhatsappMonitor.API.Repository
+namespace WhatsappMonitor.API.Services
 {
-    public class ChatsRepository
+    public interface IChatsService
+    {
+        Task<List<Chat>> GetAllChatsEntity(int id);
+        Task<Tuple<PaginationDTO, List<Chat>>> GetAllChatsPagination(int id, int pagination, int take);
+        Task<int> SearchEntityChatTextByDate(int id, string date);
+        Task<List<Chat>> SearchEntityChatText(string text, int id, int pagination, int take);
+        Task<List<ParticipantDTO>> GetChatParticipants(int id);
+        Task UpdateNameChat(int entityId, ParticipantDTO participant);
+        Task DeleteNameChat(int entityId, string name);
+        Task<List<ChatUploadDTO>> GetChatUploadDate(int id);
+        Task<List<Upload>> GetUploadAwaiting(int id);
+        Task DeleteDateChat(int entityId, ChatUploadDTO dto);
+        Task<TotalFolderInfoDTO> GetFullChatInfo(int entityId, string from, string until);
+        Task ProcessEntityFiles();
+        Task<List<ChatPersonInfoDTO>> GetChatParticipantsInfo(int entityId, string from, string until);
+    }
+
+    public class ChatsService : IChatsService
     {
         private readonly MyDbContext _context;
-        public ChatsRepository(MyDbContext context)
+        public ChatsService(MyDbContext context)
         {
             _context = context;
         }
@@ -42,29 +59,27 @@ namespace WhatsappMonitor.API.Repository
             return await _context.Chats.Where(c => c.EntityId == id).OrderBy(c => c.EntityId).ToListAsync();
         }
 
-        public async Task<Tuple<PaginationDTO, List<Chat>>> GetAllChatsPagination(int id, int pagination, int take)
+        public async Task<Tuple<PaginationDTO, List<Chat>>> GetAllChatsPagination(int id, int skip, int take)
         {
-            var cleanTake = 25;
-            var cleanPagination = 0;
-            if (pagination >= 0) cleanPagination = pagination;
+            var cleanTake = 100;
+            var cleanSkip = 0;
+            if (skip >= 0) cleanSkip = skip;
             if (take >= 0 && take <= 100) cleanTake = take;
-
-            cleanPagination = cleanPagination - cleanTake;
-
+            
             var chat = await _context.Chats.Where(c => c.EntityId == id).OrderByDescending(c => c.MessageTime).ToListAsync();
 
-            var result = chat.Skip(cleanPagination).Take(cleanTake).ToList();
+            var result = chat.Skip(cleanSkip).Take(cleanTake).ToList();
 
-            var allowNext = false;
-            var allowBack = false;
+            var allowNext = false; //allow older messages
+            var allowBack = false; //allow newer messages
 
-            if (cleanPagination > 0) allowBack = true;
-            if ((cleanPagination + cleanTake) < chat.Count()) allowNext = true;
+            if (cleanSkip > 0) allowBack = true;
+            if ((cleanSkip + cleanTake) < chat.Count()) allowNext = true;
 
-            var pagesCounter = result.Count() / cleanTake;
-            var currentPage = cleanPagination / cleanTake;
+            var pagesCounter = chat.Count() / cleanTake; //totalmessages divided by current take
+            var currentPage = (cleanSkip + cleanTake) / cleanTake;
 
-            var paginationDto = new PaginationDTO(cleanPagination, cleanTake, allowNext, allowBack, pagesCounter, currentPage);
+            var paginationDto = new PaginationDTO(cleanSkip, cleanTake, allowNext, allowBack, pagesCounter, currentPage);
 
             return new Tuple<PaginationDTO, List<Chat>>(paginationDto, result);
         }
@@ -74,7 +89,7 @@ namespace WhatsappMonitor.API.Repository
             var parsedDate = DateTime.Parse(date);
             var chat = await _context.Chats.Where(c => c.EntityId == id && c.MessageTime >= parsedDate).OrderByDescending(c => c.MessageTime).CountAsync();
 
-            return chat;
+            return chat -1;
         }
 
         private List<Chat> SearchChatText(string text, List<Chat> messages)
@@ -89,7 +104,6 @@ namespace WhatsappMonitor.API.Repository
             }
             return listChat;
         }
-
         public async Task<List<Chat>> SearchEntityChatText(string text, int id, int pagination, int take)
         {
             var cleanTake = 25;
@@ -145,7 +159,6 @@ namespace WhatsappMonitor.API.Repository
 
             return participants.OrderBy(c => c.PersonName).ToList();
         }
-
         public async Task UpdateNameChat(int entityId, ParticipantDTO participant)
         {
             var newName = participant.PersonName;
@@ -160,7 +173,6 @@ namespace WhatsappMonitor.API.Repository
             await _context.SaveChangesAsync();
 
         }
-
         public async Task DeleteNameChat(int entityId, string name)
         {
             var toDelete = await _context.Chats.Where(c => c.EntityId == entityId && c.PersonName == name).ToListAsync();
@@ -238,7 +250,10 @@ namespace WhatsappMonitor.API.Repository
                 wordCounter = wordCounter + splits.Count();
                 foreach (var word in splits)
                 {
-                    superWordList.Add(word);
+                    if (word.Length > 5)
+                    {
+                    superWordList.Add(word);    
+                    }                    
                 }
             }
 
@@ -391,7 +406,7 @@ namespace WhatsappMonitor.API.Repository
 
         private static SemaphoreSlim semaphore;
 
-        public async Task ProcessTxt(Upload file)
+        private async Task ProcessTxt(Upload file)
         {
 
             var systemTime = DateTime.Now;
@@ -425,7 +440,7 @@ namespace WhatsappMonitor.API.Repository
                         if (String.IsNullOrWhiteSpace(messageText) == false && String.IsNullOrWhiteSpace(messageSender) == false)
                         {
 
-                            if (!(hashSet.Contains(new Tuple<string, DateTime>(messageText, messageDate.Value)))) { }
+                            if (!(hashSet.Contains(new Tuple<string, DateTime>(messageText, messageDate.Value)))) 
                             {
 
                                 var newChat = new Chat(messageSender, messageDate.Value, systemTime, messageText, file.EntityId);
@@ -457,8 +472,7 @@ namespace WhatsappMonitor.API.Repository
             _context.Uploads.Remove(file);
             await _context.SaveChangesAsync();
         }
-
-        public async Task ProcessJson(Upload file)
+        private async Task ProcessJson(Upload file)
         {
             var systemTime = DateTime.Now;
             var toString = Encoding.UTF8.GetString(file.FileContent);
@@ -491,8 +505,6 @@ namespace WhatsappMonitor.API.Repository
             _context.Uploads.Remove(file);
             await _context.SaveChangesAsync();
         }
-
-
         public async Task ProcessEntityFiles()
         {
             semaphore = new SemaphoreSlim(1, 1);

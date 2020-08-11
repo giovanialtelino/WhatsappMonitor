@@ -47,6 +47,4 @@ namespace WhatsappMonitor.Shared.Models
             this.Valid = false;
         }
     }
-
-
 }

@@ -3,10 +3,6 @@
 @inject Services.ApiService apiServices
 @using WhatsappMonitor.Shared.Models;
 
-<div style="justify-content: center;" class="form-row">
-    <h2>Chat Reader</h2>
-</div>
-
 @if(chats == null)
 {
 <p>Loading chats...</p>
@@ -14,12 +10,9 @@
 else
 {
 
-<ChatComponent
-chats = "@chats" />
-
 <ul>
     <div class="form-group row" style="justify-content: start;">
-        <div class="col-2">
+        <div class="col-3">
             <div class="form-group row">
                 <label for="inputEmail3" class="col-form-label col-5">@currentPage / @totalPages</label>
                 <div class="btn-group " role="group" aria-label="Menu bar">
@@ -42,16 +35,11 @@ chats = "@chats" />
                 </button>
             </div>
         </div>
-
-        <div class="col-2">
-            <div class="form-group row">
-                <label for="inputEmail3" class="col-form-label col-9">Numer of chats for next page</label>
-                <input type="number" @bind="@take" class="form-control col-3">
-            </div>
-        </div>
     </div>
 </ul>
 
+<ChatComponent
+chats = "@chats" />
 
 }
 
@@ -64,8 +52,8 @@ chats = "@chats" />
     int take = 25;
     int totalPages = 0;
     int currentPage = 0;
-    bool allowBack = false;
-    bool allowNext = false;
+    bool allowBack = false; //new messages
+    bool allowNext = false; //older messages
 
     protected override async Task OnInitializedAsync()
     {
@@ -83,8 +71,8 @@ chats = "@chats" />
         skip = pagination.Pagination;
         take = pagination.Take;
         totalPages = pagination.TotalPages;
-        allowBack = pagination.AllowNext;
-        allowNext = pagination.AllowBack;
+        allowBack = !pagination.AllowBack;
+        allowNext = !pagination.AllowNext;
         currentPage = pagination.CurrentPage;
     }
 

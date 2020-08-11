@@ -7,12 +7,22 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.IO;
 
-namespace WhatsappMonitor.API.Repository
+namespace WhatsappMonitor.API.Services
 {
-    public class EntitiesRepository
+    public interface IEntitiesService
+    {
+        Task<List<Entity>> GetAllEntitiesAsync();
+        Task<Entity> GetEntityById(int id);
+        Task UpdateEntity(int id, Entity entity);
+        Task AddEntity(Entity entity);
+        Task DeleteEntity(int id);
+        Task UploadFile(int entityId, DateTime uploadTime, string fileName, byte[] fileContent);
+    }
+    
+    public class EntitiesService : IEntitiesService
     {
         private readonly MyDbContext _context;
-        public EntitiesRepository(MyDbContext context)
+        public EntitiesService(MyDbContext context)
         {
             _context = context;
         }
@@ -84,7 +94,5 @@ namespace WhatsappMonitor.API.Repository
             _context.Uploads.Add(newUpload);
             await _context.SaveChangesAsync();
         }
-
-        
     }
 }

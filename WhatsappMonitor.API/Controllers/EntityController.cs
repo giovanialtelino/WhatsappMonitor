@@ -8,23 +8,22 @@ using Microsoft.AspNetCore.Hosting;
 using WhatsappMonitor.Shared.Models;
 using WhatsappMonitor.API.Context;
 using Microsoft.EntityFrameworkCore;
-using WhatsappMonitor.API.Repository;
+using WhatsappMonitor.API.Services;
 using System.IO;
 using Microsoft.AspNetCore.Authorization;
 
 namespace WhatsappMonitor.API.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize]
     [ApiController]
     public class EntitiesController : Controller
     {
-        private EntitiesRepository _repo;
-        private ChatsRepository _chat;
-        public EntitiesController()
+        private readonly IEntitiesService _repo;
+        private readonly IChatsService _chat;
+        public EntitiesController(MyDbContext iEntitiesService, MyDbContext iChatsService)
         {
-            this._repo = new EntitiesRepository(new MyDbContext());
-            this._chat = new ChatsRepository(new MyDbContext());
+            this._repo = new EntitiesService(iEntitiesService);
+            this._chat = new ChatsService(iChatsService);
         }
 
         [HttpGet]
@@ -80,7 +79,7 @@ namespace WhatsappMonitor.API.Controllers
                 }
             }
 
-            _chat.ProcessEntityFiles();
+            await _chat.ProcessEntityFiles();
             return counter;
         }
 

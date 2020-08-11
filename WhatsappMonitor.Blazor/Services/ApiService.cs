@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using System.Text.Json;
 using System.Threading.Tasks;
 using WhatsappMonitor.Shared.Models;
+using WhatsappMonitor.Shared.Models.AuthAuto;
 using Microsoft.AspNetCore.WebUtilities;
 using System.IO;
 using System;
@@ -15,9 +16,14 @@ namespace WhatsappMonitor.Blazor.Services
     {
         private readonly IWebHostEnvironment _env;
         private readonly HttpClient _httpClient;
-        public ApiService(HttpClient client)
+         public ApiService(HttpClient client)
         {
             _httpClient = client;
+        }
+
+        private async Task RefreshHeader()
+        {
+          
         }
 
         public async Task<List<Entity>> GetentitiesAsync()
@@ -108,9 +114,9 @@ namespace WhatsappMonitor.Blazor.Services
             };
             var result = await _httpClient.GetFromJsonAsync<int>(QueryHelpers.AddQueryString(($"/api/chats/search-date/{id}"), query));
             return result;
-        }        
+        }
 
-         public async Task<List<Upload>> UploadWaiting(int id)
+        public async Task<List<Upload>> UploadWaiting(int id)
         {
             var result = await _httpClient.GetFromJsonAsync<List<Upload>>($"/api/chats/awaiting-process/{id}");
             return result;
@@ -139,5 +145,13 @@ namespace WhatsappMonitor.Blazor.Services
             var result = await _httpClient.GetFromJsonAsync<List<ChatPersonInfoDTO>>(QueryHelpers.AddQueryString(($"/api/chats/chat-users/{id}"), query));
             return result;
         }
+
+        public async Task<bool> AlreadyHasUser()
+        {
+            var result = await _httpClient.GetFromJsonAsync<bool>("/api/users/first");
+            return result;
+        }
+
+        
     }
 }

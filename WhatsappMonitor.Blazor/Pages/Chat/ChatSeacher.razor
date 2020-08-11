@@ -3,13 +3,9 @@
 @inject Services.ApiService apiServices
 @using WhatsappMonitor.Shared.Models;
 
-<div style="justify-content: center;" class="form-row">
-    <h2>Chat Search</h2>
-</div>
-
 <div class="form-row">
     <div class="col-md-4">
-        <input type="text" class="form-control" @bind="searchChat">
+        <input type="text" class="form-control" placeholder="Seach for a word" @bind="searchChat">
     </div>
     <div class="col-md-2">
         <button type="button" class="btn btn-primary" @onclick="SearchChat">Buscar</button>
@@ -20,7 +16,7 @@
 
 @if(chats == null)
 {
-<p>Seach for a word.</p>
+
 }
 else
 {

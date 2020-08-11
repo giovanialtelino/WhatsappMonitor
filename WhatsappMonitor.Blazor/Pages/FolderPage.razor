@@ -1,10 +1,9 @@
-@page "/user/{entityId}"
+@page "/folder/{entityId}"
 
-@using System.IO;
+@using System.IO
 @inject Services.ApiService apiServices
 @using WhatsappMonitor.Shared.Models
-@using WhatsappMonitor.Blazor.Pages.Chat
-
+ 
 @if(entity == null)
 {
     <p><em>Loading...</em></p>
@@ -55,15 +54,13 @@ else if(selected == 3)
 }
 else if(selected == 4)
 {
-    <Upload
-    Id = "@entity.EntityId" />
-    <BeingUploaded
+    <UploadController
     Id = "@entity.EntityId" />
     <UploadDates
     Id = "@entity.EntityId" />
 }
  
-@code{
+@code {
     [Parameter]
     public String entityId { get; set; }
     public Entity entity { get; set; }
@@ -74,6 +71,7 @@ else if(selected == 4)
         selected = -1;
         await GetUser();
     }
+
     public async Task GetUser()
     {
         entity = await apiServices.GetEntityByIdAsync(entityId);

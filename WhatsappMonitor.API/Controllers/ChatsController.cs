@@ -7,21 +7,18 @@ using Microsoft.AspNetCore.Mvc;
 using WhatsappMonitor.Shared.Models;
 using WhatsappMonitor.API.Context;
 using Microsoft.EntityFrameworkCore;
-using WhatsappMonitor.API.Repository;
-using Microsoft.AspNetCore.Authorization;
-
+using WhatsappMonitor.API.Services;
 
 namespace WhatsappMonitor.API.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize]
     [ApiController]
     public class ChatsController : Controller
     {
-        private ChatsRepository _repo;
-        public ChatsController()
+        private readonly IChatsService _repo;
+        public ChatsController(MyDbContext chat)
         {
-            this._repo = new ChatsRepository(new MyDbContext());
+            this._repo = new ChatsService(chat);
         }
 
         [HttpGet("{id}")]
@@ -30,16 +27,16 @@ namespace WhatsappMonitor.API.Controllers
             return await _repo.GetAllChatsEntity(id);
         }
 
-        [HttpGet("load/{id}/{pagination}/{take}")]
-        public async Task<ActionResult <Tuple<PaginationDTO, List<Chat>>>> GetChatsPagination(int id, int pagination, int take)
+        [HttpGet("load/{id}/{skip}/{take}")]
+        public async Task<ActionResult <Tuple<PaginationDTO, List<Chat>>>> GetChatsPagination(int id, int skip, int take)
         {
-            return await _repo.GetAllChatsPagination(id, pagination, take);
+            return await _repo.GetAllChatsPagination(id, skip, take);
         }
 
-        [HttpGet("search/{id}/{message}/{pagination}/{take}")]
-        public async Task<ActionResult<List<Chat>>> SearchChat(int id, string message, int pagination, int take)
+        [HttpGet("search/{id}/{message}/{skip}/{take}")]
+        public async Task<ActionResult<List<Chat>>> SearchChat(int id, string message, int skip, int take)
         {
-            return await _repo.SearchEntityChatText(message, id, pagination, take);
+            return await _repo.SearchEntityChatText(message, id, skip, take);
         }
 
         [HttpGet("search-date/{id}")]

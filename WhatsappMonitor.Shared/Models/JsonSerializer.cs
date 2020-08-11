@@ -12,5 +12,3 @@ namespace WhatsappMonitor.Shared.Models
         public string MediaSize {get;set;} 
     }
 }
-
-//{"Pk":"203340","Date":"2018-04-24 12:36:52","From":"me","MsgContent":"N/A","MsgStatus":"6","MediaType":"0","MediaSize":"19"//}

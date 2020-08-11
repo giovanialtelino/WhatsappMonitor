@@ -1,13 +1,14 @@
 @page "/uploadDates"
 
 @inject Services.ApiService apiServices
-@using WhatsappMonitor.Shared.Models;
+@using WhatsappMonitor.Shared.Models
+@inject Services.NewUploadService newUploadService
 
 <div style="justify-content: center;" class="form-row">
     <h2>Chat uploads</h2>
 </div>
 
-@if(users == null)
+@if(users == null )
 {
 <p>Loading....</p>
 }
@@ -39,20 +40,35 @@ else
 @code {
     [Parameter]
     public int Id { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> RefreshFile { get; set; }
+
     List<ChatUploadDTO> users;
 
     protected override async Task OnInitializedAsync()
     {
+        newUploadService.OnUpload += Refresh;
         await GetUploads();
     }
 
     public async Task GetUploads()
     {
         users = await apiServices.GetChatUploadDates(Id);
+        StateHasChanged();
     }
 
     public async Task DeleteChat(ChatUploadDTO dto)
     {
         await apiServices.DeleteChatUpload(Id, dto);
+        await GetUploads();
+    }
+
+    public void Refresh()
+    {
+        if (newUploadService.Upload == false)
+        {
+            GetUploads();
+        }
     }
 }

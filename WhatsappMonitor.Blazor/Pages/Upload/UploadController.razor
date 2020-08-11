@@ -1,5 +1,7 @@
 @page "/singlefile"
 @inject Services.ApiService apiServices
+@inject Services.NewUploadService newUploadService
+@using System.IO
 
 <form>
 <div style="justify-content: center;" class="form-row">
@@ -12,7 +14,7 @@
     </div>
 
     <div class="form-group col-6">
-@if(results != null)
+@if(results != null  )
 {
     <div class="form-row">
     <div class="alert alert-primary" role="alert">
@@ -42,13 +44,14 @@
             var ms = new MemoryStream();
             await file.Data.CopyToAsync(ms);
 
-            var content = new MultipartFormDataContent {
-    { new ByteArrayContent(ms.GetBuffer()), "\"upload\"", file.Name }
-    };
+            var content = new MultipartFormDataContent { { new ByteArrayContent(ms.GetBuffer()), "\"upload\"", file.Name } };
+
+            newUploadService.NewUpload();
 
             var added = await apiServices.PostFile(content, Id);
-            results = $"{added} records were saved";
+            results = $"{added} file were processed";
 
+            newUploadService.FinishUpload();
         }
     }
 }

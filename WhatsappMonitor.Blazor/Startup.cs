@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
@@ -10,7 +7,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
- 
 namespace WhatsappMonitor.Blazor
 {
     public class Startup
@@ -28,12 +24,15 @@ namespace WhatsappMonitor.Blazor
         {
             services.AddRazorPages();
             services.AddServerSideBlazor();
-             services.AddHttpClient<Services.ApiService>(c =>
-            {
-                c.BaseAddress = new Uri("http://localhost:5001");
-            });
+
+            services.AddSingleton<Services.NewUploadService>();
+
+            services.AddHttpClient<Services.ApiService>(c =>
+           {
+               c.BaseAddress = new Uri("http://localhost:5001");
+           });
         }
-      
+
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {

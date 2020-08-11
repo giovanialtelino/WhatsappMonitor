@@ -10,13 +10,21 @@ namespace WhatsappMonitor.Shared.Models.AuthAuto
 
         public string JwtToken { get; set; }
 
-        [JsonIgnore]
         public string RefreshToken { get; set; }
+        public AuthenticateResponse(){}
 
         public AuthenticateResponse(User user, string jwtToken, string refreshToken)
         {
             AuthenticateResposeId = user.UserId;
             Username = user.Username;
+            JwtToken = jwtToken;
+            RefreshToken = refreshToken;
+        }
+
+        public AuthenticateResponse(int authenticateResposeId, string username, string jwtToken, string refreshToken)
+        {
+            AuthenticateResposeId = authenticateResposeId;
+            Username = username;
             JwtToken = jwtToken;
             RefreshToken = refreshToken;
         }

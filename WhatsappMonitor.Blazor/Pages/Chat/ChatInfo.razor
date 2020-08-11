@@ -2,11 +2,7 @@
 @inject Services.ApiService apiServices
 @using WhatsappMonitor.Shared.Models;
 
-<div style="justify-content: center;" class="form-row">
-    <h2>General Information</h2>
-</div>
-
-@if(totalInfo == null || totalUsers == null)
+@if(totalInfo == null )
 {
 <p>Loading....</p>
 }
@@ -45,25 +41,12 @@ else
     </div>
 </div>
 
-
-<div style="justify-content: center;" class="form-row">
-    <h2>User Information</h2>
-</div>
-
-foreach (var item in totalUsers)
-{
-    <p>@item.PersonName</p>
 }
-
-}
-
-
 
 @code {
     [Parameter]
     public int Id { get; set; }
     TotalFolderInfoDTO totalInfo;
-    List<ChatPersonInfoDTO> totalUsers;
 
     DateTime from;
 
@@ -72,16 +55,10 @@ foreach (var item in totalUsers)
     protected override async Task OnInitializedAsync()
     {
         await GetTotalFolderInfo();
-        await GetTotalFolderUsersInfo();
     }
 
     public async Task GetTotalFolderInfo()
     {
         totalInfo = await apiServices.GetTotalFolderInfo(Id, from, until);
-    }
-
-    public async Task GetTotalFolderUsersInfo()
-    {
-        totalUsers = await apiServices.GetTotalFolderUsersInfo(Id, from, until);
     }
 }
