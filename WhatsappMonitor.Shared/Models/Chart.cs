@@ -24,4 +24,21 @@ namespace WhatsappMonitor.Shared.Models
         public List<Tuple<string, double>> CommonWords { get; set; }
         public List<Tuple<string, double>> CommonHours { get; set; }
     }
+
+    public class MessagesTime
+    {
+        public int Hour { get; set; }
+        public double MessagePercentage { get; set; }
+    }
+    public class WordsTime
+    {
+        public int Hour { get; set; }
+        public double MessagePercentage { get; set; }
+    }
+
+    public class UsersTime
+    {
+        public string UserName { get; set; }
+        public double MessagePercentage { get; set; }
+    }
 }

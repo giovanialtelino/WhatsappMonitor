@@ -1,6 +1,7 @@
 @page "/chatInfo"
 @inject Services.ApiService apiServices
-@using WhatsappMonitor.Shared.Models;
+@using WhatsappMonitor.Shared.Models
+@using WhatsappMonitor.Blazor.Pages.Chart
 
 @if(totalInfo == null )
 {
@@ -8,46 +9,40 @@
 }
 else
 {
-<div class="form-row">
-    <div class="col-sm-2">
-        <label>Total Messages</label>
-        <input type="text" class="form-control" @bind="@totalInfo.TotalMessage">        
+<div class="form-row justify-content-between">
+    <div class="col-2">
+        <div class="form-row">
+<label for="messages">Total Messages</label>
+        <input id="messages" type="text" class="form-control" @bind="@totalInfo.TotalMessage">        
+        </div>
+        <div class="form-row">
+    <label for="words">Total Words</label>
+        <input id="words" type="text" class="form-control" @bind="@totalInfo.TotalWords">        
+        </div>
+        
     </div>
-    <div class="col-sm-2">
-        <label>Total Words</label>
-        <input type="text" class="form-control" @bind="@totalInfo.TotalWords">        
+
+@if(messages != null && words != null){
+<div class="col-9">
+<MessagesWordsByHour
+messagesTimes="@messages"
+wordsTime="@words" />
     </div>
-    <div class="col-sm-4">
-        <label>Messages by hour</label>
-@foreach (var item in totalInfo.CommonHours)
-{
-<li class="list-group-item">
-   <div class="form-row">
-       <p>@item.Item1 - @item.Item2</p>
-   </div>
-</li>
 }
-    </div>
-    <div class="col-sm-4">
-        <label>Most Common Words</label>
-@foreach (var item in totalInfo.CommonWords)
-{
-<li class="list-group-item">
-   <div class="form-row">
-       <p>@item.Item1 - @item.Item2</p>
-   </div>
-</li>
-}
-    </div>
+    
+    
 </div>
 
 }
+
 
 @code {
     [Parameter]
     public int Id { get; set; }
     TotalFolderInfoDTO totalInfo;
-
+    public List<MessagesTime> messages;
+    public List<WordsTime> words;
+    public List<UsersTime> users;
     DateTime from;
 
     DateTime until;
@@ -55,10 +50,34 @@ else
     protected override async Task OnInitializedAsync()
     {
         await GetTotalFolderInfo();
+        await GetWordTimeInfo();
+        await GetMessageTimeInfo();
     }
 
     public async Task GetTotalFolderInfo()
     {
         totalInfo = await apiServices.GetTotalFolderInfo(Id, from, until);
     }
+
+    public async Task GetWordTimeInfo()
+    {
+        words = await apiServices.GetWordTimeInfo(Id, from, until);
+    }
+
+    public async Task GetMessageTimeInfo()
+    {
+        messages = await apiServices.GetMessageTimeInfo(Id, from, until);
+    }
+
+    public async Task GetUserPercentageInfo()
+    {
+        users = await apiServices.GetUserPercentageInfo(Id, from, until);
+    }
+
+    //pie chart by user
+
+    //something like github push register
+
+
+
 }

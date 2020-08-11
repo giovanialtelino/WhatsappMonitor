@@ -28,7 +28,7 @@ namespace WhatsappMonitor.API.Controllers
         }
 
         [HttpGet("load/{id}/{skip}/{take}")]
-        public async Task<ActionResult <Tuple<PaginationDTO, List<Chat>>>> GetChatsPagination(int id, int skip, int take)
+        public async Task<ActionResult<Tuple<PaginationDTO, List<Chat>>>> GetChatsPagination(int id, int skip, int take)
         {
             return await _repo.GetAllChatsPagination(id, skip, take);
         }
@@ -85,6 +85,24 @@ namespace WhatsappMonitor.API.Controllers
         public async Task<TotalFolderInfoDTO> GetChatInfo(int id, [FromQuery] string from, [FromQuery] string until)
         {
             return await _repo.GetFullChatInfo(id, from, until);
+        }
+
+        [HttpGet("chat-info/message-counter/{id}")]
+        public async Task<List<MessagesTime>> GetChatInfoMessageCounter(int id, [FromQuery] string from, [FromQuery] string until)
+        {
+            return await _repo.GetChatInfoMessageCounter(id, from, until);
+        }
+
+        [HttpGet("chat-info/word-counter/{id}")]
+        public async Task<List<WordsTime>> GetChatInfoWordCounter(int id, [FromQuery] string from, [FromQuery] string until)
+        {
+            return await _repo.GetChatInfoWordCounter(id, from, until);
+        }
+
+        [HttpGet("chat-info/user-counter/{id}")]
+        public async Task<List<UsersTime>> GetChatInfoUserCounter(int id, [FromQuery] string from, [FromQuery] string until)
+        {
+            return await _repo.GetChatInfoUserCounter(id, from, until);
         }
 
         [HttpGet("chat-users/{id}")]

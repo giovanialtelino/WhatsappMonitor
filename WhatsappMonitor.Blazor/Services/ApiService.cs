@@ -16,14 +16,14 @@ namespace WhatsappMonitor.Blazor.Services
     {
         private readonly IWebHostEnvironment _env;
         private readonly HttpClient _httpClient;
-         public ApiService(HttpClient client)
+        public ApiService(HttpClient client)
         {
             _httpClient = client;
         }
 
         private async Task RefreshHeader()
         {
-          
+
         }
 
         public async Task<List<Entity>> GetentitiesAsync()
@@ -134,6 +134,43 @@ namespace WhatsappMonitor.Blazor.Services
             return result;
         }
 
+        public async Task<List<WordsTime>> GetWordTimeInfo(int id, DateTime from, DateTime until)
+        {
+            var query = new Dictionary<string, string>
+            {
+                ["from"] = from.ToString(),
+                ["until"] = until.ToString()
+            };
+
+            var result = await _httpClient.GetFromJsonAsync<List<WordsTime>>(QueryHelpers.AddQueryString(($"/api/chats/chat-info/word-counter/{id}"), query));
+            return result;
+        }
+
+        public async Task<List<MessagesTime>> GetMessageTimeInfo(int id, DateTime from, DateTime until)
+        {
+            var query = new Dictionary<string, string>
+            {
+                ["from"] = from.ToString(),
+                ["until"] = until.ToString()
+            };
+
+            var result = await _httpClient.GetFromJsonAsync<List<MessagesTime>>(QueryHelpers.AddQueryString(($"/api/chats/chat-info/message-counter/{id}"), query));
+            return result;
+        }
+
+          public async Task<List<UsersTime>> GetUserPercentageInfo(int id, DateTime from, DateTime until)
+        {
+            var query = new Dictionary<string, string>
+            {
+                ["from"] = from.ToString(),
+                ["until"] = until.ToString()
+            };
+
+            var result = await _httpClient.GetFromJsonAsync<List<UsersTime>>(QueryHelpers.AddQueryString(($"/api/chats/chat-info/user-counter/{id}"), query));
+            return result;
+        }
+
+
         public async Task<List<ChatPersonInfoDTO>> GetTotalFolderUsersInfo(int id, DateTime from, DateTime until)
         {
             var query = new Dictionary<string, string>
@@ -152,6 +189,6 @@ namespace WhatsappMonitor.Blazor.Services
             return result;
         }
 
-        
+
     }
 }

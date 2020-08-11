@@ -29,8 +29,12 @@ namespace WhatsappMonitor.API.Services
         Task<List<Upload>> GetUploadAwaiting(int id);
         Task DeleteDateChat(int entityId, ChatUploadDTO dto);
         Task<TotalFolderInfoDTO> GetFullChatInfo(int entityId, string from, string until);
+        Task<List<MessagesTime>> GetChatInfoMessageCounter(int entityId, string from, string until);
+        Task<List<WordsTime>> GetChatInfoWordCounter(int entityId, string from, string until);
+        Task<List<UsersTime>> GetChatInfoUserCounter(int entityId, string from, string until);
         Task ProcessEntityFiles();
         Task<List<ChatPersonInfoDTO>> GetChatParticipantsInfo(int entityId, string from, string until);
+
     }
 
     public class ChatsService : IChatsService
@@ -65,7 +69,7 @@ namespace WhatsappMonitor.API.Services
             var cleanSkip = 0;
             if (skip >= 0) cleanSkip = skip;
             if (take >= 0 && take <= 100) cleanTake = take;
-            
+
             var chat = await _context.Chats.Where(c => c.EntityId == id).OrderByDescending(c => c.MessageTime).ToListAsync();
 
             var result = chat.Skip(cleanSkip).Take(cleanTake).ToList();
@@ -89,7 +93,7 @@ namespace WhatsappMonitor.API.Services
             var parsedDate = DateTime.Parse(date);
             var chat = await _context.Chats.Where(c => c.EntityId == id && c.MessageTime >= parsedDate).OrderByDescending(c => c.MessageTime).CountAsync();
 
-            return chat -1;
+            return chat - 1;
         }
 
         private List<Chat> SearchChatText(string text, List<Chat> messages)
@@ -239,7 +243,7 @@ namespace WhatsappMonitor.API.Services
         public async Task<TotalFolderInfoDTO> GetFullChatInfo(int entityId, string from, string until)
         {
             var checkedDates = await CheckDates(from, until);
-            var messages = await _context.Chats.Where(e => e.EntityId == entityId).ToListAsync();
+            var messages = await _context.Chats.Where(e => e.EntityId == entityId && e.MessageTime > checkedDates.From && e.MessageTime < checkedDates.Until).ToListAsync();
             var totalMessages = messages.Count();
             var wordCounter = 0;
             var superWordList = new List<string>();
@@ -252,8 +256,8 @@ namespace WhatsappMonitor.API.Services
                 {
                     if (word.Length > 5)
                     {
-                    superWordList.Add(word);    
-                    }                    
+                        superWordList.Add(word);
+                    }
                 }
             }
 
@@ -278,6 +282,96 @@ namespace WhatsappMonitor.API.Services
                 CommonHours = commonHoursPercentage.OrderByDescending(c => c.Item2).Take(10).ToList()
             };
             return total;
+        }
+
+
+        public async Task<List<MessagesTime>> GetChatInfoMessageCounter(int entityId, string from, string until)
+        {
+            var checkedDates = await CheckDates(from, until);
+            var messages = await _context.Chats.Where(e => e.EntityId == entityId && e.MessageTime > checkedDates.From && e.MessageTime < checkedDates.Until).ToListAsync();
+            var totalMessages = messages.Count();
+            var commonHours = messages.GroupBy(c => c.MessageTime.Hour).Select(c => new Tuple<int, int>(c.Key, c.Count())).ToList();
+
+            var totalHours = commonHours.Sum(c => c.Item2);
+            var hoursPercentage = new List<MessagesTime>();
+
+            foreach (var item in commonHours)
+            {
+                double percentage = (item.Item2 * 100) / totalMessages;
+                hoursPercentage.Add(new MessagesTime { Hour = item.Item1, MessagePercentage = percentage });
+            }
+
+            return hoursPercentage;
+        }
+
+        public async Task<List<UsersTime>> GetChatInfoUserCounter(int entityId, string from, string until)
+        {
+            var checkedDates = await CheckDates(from, until);
+            var messages = await _context.Chats.Where(e => e.EntityId == entityId && e.MessageTime > checkedDates.From && e.MessageTime < checkedDates.Until).ToListAsync();
+            var totalMessages = messages.Count();
+            var userGrouped = messages.GroupBy(c => c.PersonName).Select(c => new Tuple<string, int>(c.Key, c.Count())).ToList();
+
+            var usersPercentage = new List<UsersTime>();
+
+            foreach (var item in userGrouped)
+            {
+                double percentage = Math.Round((double)(item.Item2 * 100) / totalMessages);
+                usersPercentage.Add(new UsersTime { UserName = item.Item1, MessagePercentage = percentage });
+            }
+
+            var top10 = usersPercentage.OrderByDescending(c => c.MessagePercentage).Take(10).ToList();
+
+            if (usersPercentage.Count > 9)
+            {
+                double othersPercentage = 0;
+                foreach (var item in usersPercentage.Skip(10))
+                {
+                    othersPercentage = othersPercentage + item.MessagePercentage;
+                }
+                top10.Add(new UsersTime { UserName = "Others", MessagePercentage = othersPercentage });
+            }
+
+            return top10;
+        }
+
+
+        public async Task<List<WordsTime>> GetChatInfoWordCounter(int entityId, string from, string until)
+        {
+            var checkedDates = await CheckDates(from, until);
+            var messages = await _context.Chats.Where(e => e.EntityId == entityId && e.MessageTime > checkedDates.From && e.MessageTime < checkedDates.Until).ToListAsync();
+            var commonHours = messages
+            .GroupBy(c => c.MessageTime.Hour)
+            .Select(c => new Tuple<int, List<string>>(c.Key, c.Select(a => a.Message).ToList()))
+            .ToList();
+
+            var tempTuple = new List<Tuple<int, int>>();
+
+            foreach (var item in commonHours)
+            {
+                var wordCounter = 0;
+
+                foreach (var strings in item.Item2)
+                {
+                    var splits = strings.Split(new char[] { '.', '?', '!', ' ', ';', ':', ',' }, StringSplitOptions.RemoveEmptyEntries).Count();
+                    wordCounter = wordCounter + splits;
+                }
+
+                tempTuple.Add(new Tuple<int, int>(item.Item1, wordCounter));
+            }
+
+            var totalWords = tempTuple.Sum(c => c.Item2);
+
+            var wordsPercentage = new List<WordsTime>();
+
+            foreach (var item in tempTuple)
+            {
+                double percentage = (item.Item2 * 100) / totalWords;
+                wordsPercentage.Add(new WordsTime { Hour = item.Item1, MessagePercentage = percentage });
+            }
+
+            return wordsPercentage;
+
+
         }
 
         public async Task<List<ChatPersonInfoDTO>> GetChatParticipantsInfo(int entityId, string from, string until)
@@ -440,7 +534,7 @@ namespace WhatsappMonitor.API.Services
                         if (String.IsNullOrWhiteSpace(messageText) == false && String.IsNullOrWhiteSpace(messageSender) == false)
                         {
 
-                            if (!(hashSet.Contains(new Tuple<string, DateTime>(messageText, messageDate.Value)))) 
+                            if (!(hashSet.Contains(new Tuple<string, DateTime>(messageText, messageDate.Value))))
                             {
 
                                 var newChat = new Chat(messageSender, messageDate.Value, systemTime, messageText, file.EntityId);
