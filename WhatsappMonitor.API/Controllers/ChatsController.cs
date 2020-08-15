@@ -63,6 +63,12 @@ namespace WhatsappMonitor.API.Controllers
             return await _repo.GetUploadAwaiting(id);
         }
 
+        [HttpPut("update-participants/{id}")]
+        public async Task<ActionResult<List<ParticipantDTO>>> UpdateParticipantsChat(int id, [FromBody] List<ParticipantDTO> participant)
+        {
+            return await _repo.UpdateParticipantsChat(id, participant);
+        }
+
         [HttpPut("update-name/{id}")]
         public async Task UpdateNameChat(int id, [FromBody] ParticipantDTO participant)
         {

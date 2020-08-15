@@ -15,6 +15,7 @@ namespace WhatsappMonitor.API.Context
             base.OnConfiguring(optionsBuilder);
         }
 
+//psql "dbname=wmonitor host=127.0.0.1 user=whatsapp password=whatsappmonitor port=5432 sslmode=require"
         protected override void OnModelCreating(ModelBuilder modelbuilder)
         {
             modelbuilder.Entity<Entity>().ToTable("Group");

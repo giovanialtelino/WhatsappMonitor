@@ -2,42 +2,62 @@
 @inject Services.ApiService apiServices
 @using WhatsappMonitor.Shared.Models;
 
-@if(users == null || loading == true)
+@if(users == null)
 {
 <p>Loading....</p>
 }
-else if(loading == false)
+else if (users != null && alertUpdate == false)
 {
 <div class="form-row">
-<div class="form-group col-md-2">
-                <label for="">Order By</label>
-                <select class="form-control" @onchange="@OrderList">
-                    <option value="name">Name</option>
-                    <option value="firstMessage">First Message</option>
-                    <option value="lastMessage">Last Message</option>
-                    <option value="messageP">Message %</option>
-                    <option value="wordP">Word %</option>
-                </select>
-            </div>
-            <div class="form-group col-md-2">
-                <label for="">Order Type</label>
-                <select class="form-control" @onchange="@OrderType">
-                    <option value="crescent">Crescent</option>
-                    <option value="decrescente">Decrescent</option>
-                </select>
-            </div>
+    <div class="form-group col-2">
+        <label for="">Order By</label>
+        <select class="form-control" @onchange="@OrderList">
+            <option value="name">Name</option>
+            <option value="firstMessage">First Message</option>
+            <option value="lastMessage">Last Message</option>
+            <option value="messageP">Message %</option>
+            <option value="wordP">Word %</option>
+        </select>
+    </div>
+    <div class="form-group col-2">
+        <label for="">Order Type</label>
+        <select class="form-control" @onchange="@OrderType">
+            <option value="crescent">Crescent</option>
+            <option value="decrescente">Decrescent</option>
+        </select>
+    </div>
+    <div class="form-group col-2">
+        <label><text>&nbsp;</text></label>
+        <button class="btn btn-primary form-control" @onclick="showAlertUpdate">Update Participants</button>
+    </div>
 </div>
+
 @foreach (var i in users)
 {
 <li class="list-group-item">
     <form>
         <div class="form-row">
-            <div class="form-group col-md-6">
-                <input class="form-control" type="text" @bind="i.PersonName">
+            @if(i.NewName != i.PersonName)
+            {
+            <div class="form-group col-md-3">
+                <label for="">New Name</label>
+                <input class="form-control" type="text" @bind="i.NewName">
             </div>
             <div class="form-group col-md-3">
-                <button type="button" class="btn btn-secondary" @onclick="(() => EditPersonName(i))">Edit Name</button>
-                <button type="button" class="btn btn-danger" @onclick="(() => DeletePersonName(i.FixedName))">Delete Person</button>
+                <label for="">Old Name</label>
+                <input class="form-control" type="text" @bind="i.PersonName" readonly="true">
+            </div>
+            }else{
+            <div class="form-group col-md-6">
+                <label>Name</label>
+                <input class="form-control" type="text" @bind="i.NewName">
+            </div>
+            }
+
+            <div class="form-group col-md-2">
+                <label>Mark to Deletion</label>
+                <input type="checkbox" style="margin-top: 0px;" class="form-control col-4 form-check-input"
+                    @bind="i.ToDelete">
             </div>
         </div>
         <div class="form-row">
@@ -45,7 +65,7 @@ else if(loading == false)
                 <label for="">First Message</label>
                 <input class="form-control" type="text" @bind="i.FirstMessage">
             </div>
-             <div class="form-group col-md-2">
+            <div class="form-group col-md-2">
                 <label for="">Last Message</label>
                 <input class="form-control" type="text" @bind="i.LastMessage">
             </div>
@@ -70,51 +90,88 @@ else if(loading == false)
 </li>
 }
 }
+else if (users != null && alertUpdate == true)
+{
+<div class="alert alert-danger" role="alert">
+    <h4 class="alert-heading">Changes</h4>
+    <p>The changes listed bellow can't be reversed, if you merge or delete a person you won't be able to revert it back.</p>
+    <hr>
+    @foreach(var i in users)
+    {
+        @if(i.NewName != i.PersonName && !String.IsNullOrWhiteSpace(i.NewName) && i.ToDelete == false)
+        {
+            <p>@i.PersonName will be changed to @i.NewName</p>
+        }else if(i.ToDelete == true)
+        {
+            <p>@i.PersonName will be deleted</p>
+        }
+    }
+   
+    <hr>
+   
+</div>
+
+<div class="form-row">
+<div class="form-group col-2">
+ <button class="form-control btn-danger" @onclick="acceptChanges">Accept Changes</button>
+</div>
+<div class="form-group col-2">
+<button class="form-control btn-success" @onclick="returnChanges">Return</button>
+</div>
+
+    
+</div>
+
+
+}
 
 @code {
     [Parameter]
     public int Id { get; set; }
     List<ParticipantDTO> users;
 
-    public bool loading = true;
+     public bool alertUpdate = false;
 
     string orderType = "crescent";
     string orderList = "name";
     protected override async Task OnInitializedAsync()
     {
         await GetParticipants();
+        
     }
 
-    public void SetLoading()
-    {
-        loading = true;
-        StateHasChanged();
-    }
-
-    public void EndLoading()
-    {
-        loading = false;
-        StateHasChanged();
-    }
-
+   
     public async Task GetParticipants()
     {
         users = await apiServices.GetParticipants(Id);
-        EndLoading();
-    }
+     }
 
     public async Task EditPersonName(ParticipantDTO dto)
     {
-        SetLoading();
-        await apiServices.UpdateChatPersonName(Id, dto);
-        await GetParticipants();
+         await apiServices.UpdateChatPersonName(Id, dto);
+        //await GetParticipants();
     }
 
     public async Task DeletePersonName(string name)
     {
-        SetLoading();
-        await apiServices.DeleteChatPersonName(Id, name);
+         await apiServices.DeleteChatPersonName(Id, name);
         await GetParticipants();
+    }
+
+    public void showAlertUpdate()
+    {
+        alertUpdate = true;
+    }
+
+    public void returnChanges()
+    {
+        alertUpdate = false;
+    }
+
+    public async Task acceptChanges()
+    {
+        users = await apiServices.UpdateChatParticipants(Id, users);
+        alertUpdate = false;
     }
 
     public void OrderList(ChangeEventArgs e)
@@ -158,22 +215,22 @@ else if(loading == false)
             case "messageP":
                 if (orderType == "crescent")
                 {
-                    users = users.OrderBy(c => c.MessageCounterPercentage).ToList();
+                    users = users.OrderBy(c => c.MessageCounter).ToList();
                 }
                 else
                 {
-                    users = users.OrderByDescending(c => c.MessageCounterPercentage).ToList();
+                    users = users.OrderByDescending(c => c.MessageCounter).ToList();
                 }
                 break;
 
             case "wordP":
                 if (orderType == "crescent")
                 {
-                    users = users.OrderBy(c => c.WordsCounterPercentage).ToList();
+                    users = users.OrderBy(c => c.WordsCounter).ToList();
                 }
                 else
                 {
-                    users = users.OrderByDescending(c => c.WordsCounterPercentage).ToList();
+                    users = users.OrderByDescending(c => c.WordsCounter).ToList();
                 }
                 break;
 

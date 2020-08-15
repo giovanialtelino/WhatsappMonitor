@@ -13,7 +13,7 @@ namespace WhatsappMonitor.Shared.Models
         public string PersonName { get; set; }
         [Required]
         [JsonPropertyName("fixedName")]
-        public string FixedName { get; set; }
+        public string NewName { get; set; }
 
         [Required]
         [DisplayName("First Message")]
@@ -44,6 +44,9 @@ namespace WhatsappMonitor.Shared.Models
         [DisplayName("Words Counter")]
         [JsonPropertyName("wordsCounterPercentage")]
         public int WordsCounterPercentage { get; set; }
+        [DisplayName("To Delete")]
+        [JsonPropertyName("toDelete")]
+        public bool ToDelete { get; set; }
     }
 
     public class ChatUploadDTO
@@ -72,7 +75,7 @@ namespace WhatsappMonitor.Shared.Models
         public bool AllowNext { get; set; }
         public bool AllowBack { get; set; }
         public int TotalPages { get; set; }
-        public int CurrentPage {get;set;}
+        public int CurrentPage { get; set; }
         public PaginationDTO(int pagination, int take, bool allowNext, bool allowBack, int totalPages, int currentPage)
         {
             Pagination = pagination;

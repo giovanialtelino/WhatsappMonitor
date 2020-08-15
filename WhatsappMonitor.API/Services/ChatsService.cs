@@ -24,6 +24,7 @@ namespace WhatsappMonitor.API.Services
         Task<List<Chat>> SearchEntityChatText(string text, int id, int pagination, int take);
         Task<List<ParticipantDTO>> GetChatParticipants(int id);
         Task UpdateNameChat(int entityId, ParticipantDTO participant);
+        Task<List<ParticipantDTO>> UpdateParticipantsChat(int entityId, List<ParticipantDTO> participants);
         Task DeleteNameChat(int entityId, string name);
         Task<List<ChatUploadDTO>> GetChatUploadDate(int id);
         Task<List<Upload>> GetUploadAwaiting(int id);
@@ -101,7 +102,9 @@ namespace WhatsappMonitor.API.Services
             var listChat = new List<Chat>();
             foreach (var item in messages)
             {
-                if (item.Message.Contains(text))
+                var lowText = text.ToLower();
+                var lowerMessage = item.Message.ToLower();
+                if (lowerMessage.Contains(lowText))
                 {
                     listChat.Add(item);
                 }
@@ -117,7 +120,7 @@ namespace WhatsappMonitor.API.Services
 
             var messages = await _context.Chats.Where(c => c.EntityId == id).OrderByDescending(c => c.MessageTime).ToListAsync();
             var findText = SearchChatText(text, messages);
-            var result = findText.Skip(cleanPagination).Take(cleanTake).ToList();
+            var result = findText.Skip(cleanPagination).ToList(); //SearchEntityChatText
             return result;
         }
 
@@ -150,7 +153,7 @@ namespace WhatsappMonitor.API.Services
                     FirstMessage = firstMessage,
                     LastMessage = lastMessage,
                     PersonName = user,
-                    FixedName = user,
+                    NewName = user,
                     WordsCounter = wordCounter
                 });
             }
@@ -165,10 +168,10 @@ namespace WhatsappMonitor.API.Services
         }
         public async Task UpdateNameChat(int entityId, ParticipantDTO participant)
         {
-            var newName = participant.PersonName;
-            var oldName = participant.FixedName;
+            var newName = participant.NewName;
+            var oldName = participant.PersonName;
 
-            var toUpdate = await _context.Chats.Where(c => c.PersonName == oldName).ToListAsync();
+            var toUpdate = await _context.Chats.Where(c => c.PersonName == oldName && c.EntityId == entityId).ToListAsync();
 
             foreach (var item in toUpdate)
             {
@@ -370,8 +373,29 @@ namespace WhatsappMonitor.API.Services
             }
 
             return wordsPercentage;
+        }
 
+        public async Task<List<ParticipantDTO>> UpdateParticipantsChat(int entityId, List<ParticipantDTO> participants)
+        {
+            //check for differentes and deletions, deletions have priority over updates
+            var updateList = new List<ParticipantDTO>();
+            var deleteList = new List<ParticipantDTO>();
 
+            foreach (var item in participants)
+            {
+                if (item.ToDelete == false && item.PersonName != item.NewName && !String.IsNullOrWhiteSpace(item.NewName))
+                {
+                    await UpdateNameChat(entityId, item);
+                }
+                else if (item.ToDelete == true)
+                {
+                    await DeleteNameChat(entityId, item.PersonName);
+                }
+            }
+
+            var updatedInfo = await GetChatParticipants(entityId);
+
+            return updatedInfo;
         }
 
         public async Task<List<ChatPersonInfoDTO>> GetChatParticipantsInfo(int entityId, string from, string until)

@@ -46,6 +46,7 @@ namespace WhatsappMonitor.Blazor.Services
         public async Task EditEntity(Entity Entity)
         {
             var response = await _httpClient.PutAsJsonAsync($"api/entities/{Entity.EntityId}", Entity);
+            
         }
 
         public async Task AddEntity(string Entityname)
@@ -82,6 +83,13 @@ namespace WhatsappMonitor.Blazor.Services
         public async Task DeleteChatUpload(int id, ChatUploadDTO toDelete)
         {
             var result = await _httpClient.PutAsJsonAsync($"/api/chats/delete-date/{id}", toDelete);
+        }
+
+        public async Task<List<ParticipantDTO>> UpdateChatParticipants(int id, List<ParticipantDTO> participants)
+        {
+            var result = await _httpClient.PutAsJsonAsync($"/api/chats/update-participants/{id}", participants);
+
+            return await result.Content.ReadFromJsonAsync<List<ParticipantDTO>>();
         }
 
         public async Task UpdateChatPersonName(int id, ParticipantDTO person)
