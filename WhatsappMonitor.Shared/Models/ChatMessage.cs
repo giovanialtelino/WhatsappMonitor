@@ -5,11 +5,11 @@ using System.ComponentModel;
 
 namespace WhatsappMonitor.Shared.Models
 {
-    public class Chat
+    public class ChatMessage
     {
         [Key]
         [JsonPropertyName("id")]
-        public int ChatId { get; set; }
+        public int ChatMessageId { get; set; }
 
         [Required]
         [DisplayName("Person Name")]
@@ -30,30 +30,30 @@ namespace WhatsappMonitor.Shared.Models
         [JsonPropertyName("message")]
         public String Message { get; set; }
 
-        public int? EntityId { get; set; }
-        public Entity Group { get; set; }
-        public Chat(){}
+        public int FolderId { get; set; }
+        public Folder Folder { get; set; }
+        public ChatMessage(){}
 
-        public Chat(string personName, string message, DateTime messageTime)
+        public ChatMessage(string personName, string message, DateTime messageTime)
         {
             PersonName = personName;
             Message = message;
             MessageTime = messageTime;
         }
-        public Chat(string personName, DateTime messageTime, DateTime systemTime, string message)
+        public ChatMessage(string personName, DateTime messageTime, DateTime systemTime, string message)
         {
             PersonName = personName;
             MessageTime = messageTime;
             SystemTime = systemTime;
             Message = message;
         }
-        public Chat(string personName, DateTime messageTime, DateTime systemTime, string message, int entityId)
+        public ChatMessage(string personName, DateTime messageTime, DateTime systemTime, string message, int entityId)
         {
             PersonName = personName;
             MessageTime = messageTime;
             SystemTime = systemTime;
             Message = message;
-            EntityId = entityId;
+            FolderId = entityId;
         }
     }
 }

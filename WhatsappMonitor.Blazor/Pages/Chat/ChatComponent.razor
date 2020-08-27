@@ -1,8 +1,13 @@
 @page "/chatComponent"
 
-@using WhatsappMonitor.Shared.Models;
+@using WhatsappMonitor.Shared.Models
+@inject IJSRuntime JSRuntime
 
-<ul class="scrollable-chat-list" style="padding-left: 0px;">
+<p>@ScrollTop</p>
+<p>@MessageCount</p>
+<p>@MaxSize</p>
+
+<ul class="scrollable-chat-list" id="scroll-list" style="padding-left: 0px;" @onscroll="@OnScroll">
 @foreach (var chat in chats)
 {
 <li class="list-group-item short-padding li-hoverable">
@@ -23,5 +28,40 @@
 
 @code {
     [Parameter]
-    public List<Chat> chats {get;set;}
+    public List<ChatMessage> chats {get;set;}
+
+public int ScrollTop { get; set; }    
+public int MessageCount {get;set; }
+public int MaxSize {get;set; }
+
+      private async Task OnScroll(EventArgs e)
+   {
+      MaxSize = await MaxScrollHeight();
+      ScrollTop = await GetScroll();
+
+      if(ScrollTop > (MaxSize - 250)){
+          var tempChat = chats;
+          //chats.AddRange(tempChat);
+          chats.InsertRange(0, tempChat);
+          
+          ScrollTop = await GetScroll();
+      }
+
+      MessageCount = chats.Count();
+
+
+      
+   }
+
+private async Task<int> GetScroll()
+{
+    return await JSRuntime.InvokeAsync<int>("getScrollToTop", "#scroll-list");
+}     
+
+private async Task<int> MaxScrollHeight()
+{
+    return await JSRuntime.InvokeAsync<int>("getMaxScrollHeight", "#scroll-list");
+}
+
+   
 }

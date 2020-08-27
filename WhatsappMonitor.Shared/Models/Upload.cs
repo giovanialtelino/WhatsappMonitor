@@ -25,10 +25,7 @@ namespace WhatsappMonitor.Shared.Models
         [DisplayName("File Content")]
         [JsonPropertyName("fileContent")]
         public Byte[] FileContent { get; set; }
-
-        public string InProcess {get;set;}
-       
-        public Entity Entity { get; set; }
-        public int EntityId { get; set; }
+        public Folder Folder { get; set; }
+        public int FolderId { get; set; }
     }
 }

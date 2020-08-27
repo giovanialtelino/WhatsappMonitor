@@ -35,35 +35,35 @@ else
 else if(selected == 0)
 {
     <ChatInfo
-    Id = "@entity.EntityId" />
+    Id = "@entity.FolderId" />
 }
 else if(selected == 1)
 {
     <ChatReader
-    Id = "@entity.EntityId" />
+    Id = "@entity.FolderId" />
 }
 else if(selected == 2)
 {
     <ChatSeacher
-    Id = "@entity.EntityId" />
+    Id = "@entity.FolderId" />
 }
 else if(selected == 3)
 {
     <Participants
-    Id = "@entity.EntityId" />
+    Id = "@entity.FolderId" />
 }
 else if(selected == 4)
 {
     <UploadController
-    Id = "@entity.EntityId" />
+    Id = "@entity.FolderId" />
     <UploadDates
-    Id = "@entity.EntityId" />
+    Id = "@entity.FolderId" />
 }
  
 @code {
     [Parameter]
     public String entityId { get; set; }
-    public Entity entity { get; set; }
+    public Folder entity { get; set; }
     public int selected { get; set; }
 
     protected override async Task OnInitializedAsync()

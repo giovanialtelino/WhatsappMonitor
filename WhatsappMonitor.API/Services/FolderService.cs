@@ -9,65 +9,65 @@ using System.IO;
 
 namespace WhatsappMonitor.API.Services
 {
-    public interface IEntitiesService
+    public interface IFoldersService
     {
-        Task<List<Entity>> GetAllEntitiesAsync();
-        Task<Entity> GetEntityById(int id);
-        Task UpdateEntity(int id, Entity entity);
-        Task AddEntity(Entity entity);
+        Task<List<Folder>> GetAllEntitiesAsync();
+        Task<Folder> GetEntityById(int id);
+        Task UpdateEntity(int id, Folder Folder);
+        Task AddEntity(Folder Folder);
         Task DeleteEntity(int id);
-        Task UploadFile(int entityId, DateTime uploadTime, string fileName, byte[] fileContent);
+        Task UploadFile(int FolderId, DateTime uploadTime, string fileName, byte[] fileContent);
     }
     
-    public class EntitiesService : IEntitiesService
+    public class FoldersService : IFoldersService
     {
         private readonly MyDbContext _context;
-        public EntitiesService(MyDbContext context)
+        public FoldersService(MyDbContext context)
         {
             _context = context;
         }
 
         private async Task<bool> EntitynameAlreadyExist(string name)
         {
-            var entity = await _context.Entities.FirstOrDefaultAsync(c => c.Name == name);
-            if (entity == null)
+            var Folder = await _context.Entities.FirstOrDefaultAsync(c => c.Name == name);
+            if (Folder == null)
             {
                 return false;
             }
             return true;
         }
 
-        public async Task<List<Entity>> GetAllEntitiesAsync()
+        public async Task<List<Folder>> GetAllEntitiesAsync()
         {
             var entities = await _context.Entities.OrderBy(c => c.Name).ToListAsync();
             return entities;
         }
 
-        public async Task<Entity> GetEntityById(int id)
+        public async Task<Folder> GetEntityById(int id)
         {
-            var entities = await _context.Entities.FirstOrDefaultAsync(c => c.EntityId == id);
+            var entities = await _context.Entities.FirstOrDefaultAsync(c => c.FolderId == id);
             return entities;
         }
 
-        public async Task UpdateEntity(int id, Entity entity)
+        public async Task UpdateEntity(int id, Folder Folder)
         {
-            var entityExist = await EntitynameAlreadyExist(entity.Name);
+            var entityExist = await EntitynameAlreadyExist(Folder.Name);
 
             if (entityExist == false)
             {
-                var update = await _context.Entities.FirstOrDefaultAsync(c => c.EntityId == id);
-                _context.Entry(update).CurrentValues.SetValues(entity);
+                var update = await _context.Entities.FirstOrDefaultAsync(c => c.FolderId == id);
+                _context.Entry(update).CurrentValues.SetValues(Folder);
                 await _context.SaveChangesAsync();
             }
         }
 
-        public async Task AddEntity(Entity entity)
+        public async Task AddEntity(Folder Folder)
         {
-            var entityExist = await EntitynameAlreadyExist(entity.Name);
+            var entityExist = await EntitynameAlreadyExist(Folder.Name);
 
             if (entityExist == false)
             {
-                var newEntity = new Entity(entity.Name);
+                var newEntity = new Folder(Folder.Name);
                 var add = _context.Entities.Add(newEntity);
                 await _context.SaveChangesAsync();
             }
@@ -75,20 +75,19 @@ namespace WhatsappMonitor.API.Services
 
         public async Task DeleteEntity(int id)
         {
-            var delete = await _context.Entities.FirstOrDefaultAsync(c => c.EntityId == id);
+            var delete = await _context.Entities.FirstOrDefaultAsync(c => c.FolderId == id);
             _context.Entities.Remove(delete);
             await _context.SaveChangesAsync();
         }
 
-        public async Task UploadFile(int entityId, DateTime uploadTime, string fileName, byte[] fileContent)
+        public async Task UploadFile(int FolderId, DateTime uploadTime, string fileName, byte[] fileContent)
         {
             var newUpload = new Upload
             {
                 FileName = fileName,
                 CreationDate = uploadTime,
                 FileContent = fileContent,
-                EntityId = entityId,
-                InProcess = "No"
+                FolderId = FolderId
             };
 
             _context.Uploads.Add(newUpload);

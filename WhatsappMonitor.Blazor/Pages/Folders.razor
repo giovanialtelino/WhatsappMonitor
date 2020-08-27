@@ -11,8 +11,8 @@
  <div class="form-group col-6">
         <input class="form-control" type="text" placeholder="New Folder Name" @bind="newEntity">
     </div>
-    <div class="form-group col-6">
-        <button class="btn btn-primary form-control col-3" @onclick="AddUser">Add Folder</button>
+    <div class="form-group col-3">
+        <button class="btn btn-primary form-control" @onclick="AddUser">Add Folder</button>
     </div>
     </div>
    
@@ -20,7 +20,7 @@
 
 <br/>
 
-@if (entities == null || loading == true )
+@if (entities == null  )
 {
     <p><em>Loading...</em></p>
 }
@@ -36,63 +36,54 @@ else
                         <input class="form-control" type="text" @bind="i.Name">
                     </div>
                     <div class="form-group col-6">
-<button type="button" class="btn btn-secondary form-control col-3" @onclick="(() => EditUser(i.EntityId))" >Edit</button>
-    <button type="button" class="btn btn-danger form-control col-3" @onclick="(() => DeleteUser(i.EntityId))">Delete</button>
+<button type="button" class="btn btn-secondary form-control col-3" @onclick="(() => EditUser(i.FolderId))" >Edit</button>
+    <button type="button" class="btn btn-danger form-control col-3" @onclick="(() => DeleteUser(i.FolderId))">Delete</button>
     <button type="button" class="btn btn-success form-control col-3" @onclick="(() => UserInfoPage(i))">Information</button>
                     </div>
                 </div>
-    </form>
-    
+    </form>    
         </li>
     }
 </ul>
 }
 
 @code {
-    private List<Entity> entities;
+    private List<Folder> entities;
     private string newEntity;
-    public bool loading;
-    protected override async Task OnInitializedAsync()
+     protected override async Task OnInitializedAsync()
     {
-        loading = true;
         await GetUsers();
     }
 
     private async Task GetUsers()
     {
         entities = await apiServices.GetentitiesAsync();
-        loading = false;
-    }
+     }
 
     private async Task AddUser()
     {
         if (!string.IsNullOrWhiteSpace(newEntity))
         {
-            loading = true;
-            await apiServices.AddEntity(newEntity);
-            await GetUsers();
+             entities = await apiServices.AddEntity(newEntity);
         }
     }
 
     private async Task EditUser(int i)
     {
-        var selectedEntity = entities.First(p => p.EntityId == i);
+        var selectedEntity = entities.First(p => p.FolderId == i);
         if (!string.IsNullOrWhiteSpace(selectedEntity.Name))
         {
-            loading=true;
-            await apiServices.EditEntity(selectedEntity);
-            await GetUsers();
-        }
+             entities = await apiServices.EditEntity(selectedEntity);
+         }
     }
 
     private async Task DeleteUser(int i)
     {
-        await apiServices.DeleteEntityById(i);
-        await GetUsers();
-    }
+        entities =await apiServices.DeleteEntityById(i);
+     }
 
-    private void UserInfoPage(Entity entity)
+    private void UserInfoPage(Folder entity)
     {
-        NavigationManager.NavigateTo(String.Concat("/folder/", entity.EntityId));
+        NavigationManager.NavigateTo(String.Concat("/folder/", entity.FolderId));
     }
 }

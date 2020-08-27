@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Hosting;
 using System.Text.Json;
 using System.Threading.Tasks;
 using WhatsappMonitor.Shared.Models;
-using WhatsappMonitor.Shared.Models.AuthAuto;
 using Microsoft.AspNetCore.WebUtilities;
 using System.IO;
 using System;
@@ -21,55 +20,46 @@ namespace WhatsappMonitor.Blazor.Services
             _httpClient = client;
         }
 
-        private async Task RefreshHeader()
+        public async Task<List<Folder>> GetentitiesAsync()
         {
-
-        }
-
-        public async Task<List<Entity>> GetentitiesAsync()
-        {
-            var response = await _httpClient.GetFromJsonAsync<List<Entity>>("api/entities");
+            var response = await _httpClient.GetFromJsonAsync<List<Folder>>("api/folders");
             return response;
         }
 
-        public async Task<Entity> GetEntityByIdAsync(string id)
+        public async Task<Folder> GetEntityByIdAsync(string id)
         {
-            var response = await _httpClient.GetFromJsonAsync<Entity>($"api/entities/{id}");
+            var response = await _httpClient.GetFromJsonAsync<Folder>($"api/folders/{id}");
             return response;
         }
 
-        public async Task DeleteEntityById(int id)
+        public async Task<List<Folder>> DeleteEntityById(int id)
         {
-            var response = await _httpClient.DeleteAsync($"api/entities/{id}");
+            var response = await _httpClient.DeleteAsync($"api/folders/{id}");
+            return await response.Content.ReadFromJsonAsync<List<Folder>>();
         }
 
-        public async Task EditEntity(Entity Entity)
+        public async Task<List<Folder>> EditEntity(Folder Folder)
         {
-            var response = await _httpClient.PutAsJsonAsync($"api/entities/{Entity.EntityId}", Entity);
-            
+            var response = await _httpClient.PutAsJsonAsync($"api/folders/{Folder.FolderId}", Folder);
+            return await response.Content.ReadFromJsonAsync<List<Folder>>();
         }
 
-        public async Task AddEntity(string Entityname)
+        public async Task<List<Folder>> AddEntity(string Entityname)
         {
-            var Entity = new Entity(Entityname);
-            var response = await _httpClient.PostAsJsonAsync($"api/entities", Entity);
+            var Folder = new Folder(Entityname);
+            var response = await _httpClient.PostAsJsonAsync($"api/folders", Folder);
+            return await response.Content.ReadFromJsonAsync<List<Folder>>();
         }
 
         public async Task<int> PostFile(MultipartFormDataContent file, int id)
         {
-            var result = await _httpClient.PostAsync($"/api/entities/file/{id}", file);
+            var result = await _httpClient.PostAsync($"/api/folders/file/{id}", file);
             return await result.Content.ReadFromJsonAsync<int>();
-        }
-
-        public async Task<List<Chat>> GetChatsEntity(int id)
-        {
-            var result = await _httpClient.GetFromJsonAsync<List<Chat>>($"/api/chats/{id}");
-            return result;
         }
 
         public async Task<List<ParticipantDTO>> GetParticipants(int id)
         {
-            var result = await _httpClient.GetFromJsonAsync<List<ParticipantDTO>>($"/api/chats/members/{id}");
+            var result = await _httpClient.GetFromJsonAsync<List<ParticipantDTO>>($"/api/chats/chat-participants/{id}");
             return result;
         }
 
@@ -102,15 +92,35 @@ namespace WhatsappMonitor.Blazor.Services
             var result = await _httpClient.DeleteAsync($"/api/chats/delete-name/{id}/{name}");
         }
 
-        public async Task<List<Chat>> SearchChatWord(int id, string word, int pag, int take)
+        public async Task<List<ChatMessage>> SearchChatWord(int id, string word, int pag, int take)
         {
-            var result = await _httpClient.GetFromJsonAsync<List<Chat>>($"/api/chats/search/{id}/{word}/{pag}/{take}");
+            var result = await _httpClient.GetFromJsonAsync<List<ChatMessage>>($"/api/chats/search/{id}/{word}/{pag}/{take}");
             return result;
         }
 
-        public async Task<Tuple<PaginationDTO, List<Chat>>> LoadChat(int id, int pag, int take)
+        public async Task<Tuple<PaginationDTO, List<ChatMessage>>> LoadChat(int id, int pag, int take)
         {
-            var result = await _httpClient.GetFromJsonAsync<Tuple<PaginationDTO, List<Chat>>>($"/api/chats/load/{id}/{pag}/{take}");
+            var result = await _httpClient.GetFromJsonAsync<Tuple<PaginationDTO, List<ChatMessage>>>($"/api/chats/load/{id}/{pag}/{take}");
+            return result;
+        }
+
+          public async Task<List<ChatMessage>> LoadChatAfter(int id, DateTime date)
+        {
+            var query = new Dictionary<string, string>
+            {
+                ["date"] = date.ToString()
+            };
+            var result = await _httpClient.GetFromJsonAsync<List<ChatMessage>>(QueryHelpers.AddQueryString(($"/api/chats/load-after/{id}"), query));
+            return result;
+        }
+
+        public async Task<List<ChatMessage>> LoadChatBefore(int id, DateTime date)
+        {
+            var query = new Dictionary<string, string>
+            {
+                ["date"] = date.ToString()
+            };
+            var result = await _httpClient.GetFromJsonAsync<List<ChatMessage>>(QueryHelpers.AddQueryString(($"/api/chats/load-before/{id}"), query));
             return result;
         }
 
@@ -121,12 +131,6 @@ namespace WhatsappMonitor.Blazor.Services
                 ["startDate"] = date.ToString()
             };
             var result = await _httpClient.GetFromJsonAsync<int>(QueryHelpers.AddQueryString(($"/api/chats/search-date/{id}"), query));
-            return result;
-        }
-
-        public async Task<List<Upload>> UploadWaiting(int id)
-        {
-            var result = await _httpClient.GetFromJsonAsync<List<Upload>>($"/api/chats/awaiting-process/{id}");
             return result;
         }
 
@@ -141,62 +145,5 @@ namespace WhatsappMonitor.Blazor.Services
             var result = await _httpClient.GetFromJsonAsync<TotalFolderInfoDTO>(QueryHelpers.AddQueryString(($"/api/chats/chat-info/{id}"), query));
             return result;
         }
-
-        public async Task<List<WordsTime>> GetWordTimeInfo(int id, DateTime from, DateTime until)
-        {
-            var query = new Dictionary<string, string>
-            {
-                ["from"] = from.ToString(),
-                ["until"] = until.ToString()
-            };
-
-            var result = await _httpClient.GetFromJsonAsync<List<WordsTime>>(QueryHelpers.AddQueryString(($"/api/chats/chat-info/word-counter/{id}"), query));
-            return result;
-        }
-
-        public async Task<List<MessagesTime>> GetMessageTimeInfo(int id, DateTime from, DateTime until)
-        {
-            var query = new Dictionary<string, string>
-            {
-                ["from"] = from.ToString(),
-                ["until"] = until.ToString()
-            };
-
-            var result = await _httpClient.GetFromJsonAsync<List<MessagesTime>>(QueryHelpers.AddQueryString(($"/api/chats/chat-info/message-counter/{id}"), query));
-            return result;
-        }
-
-          public async Task<List<UsersTime>> GetUserPercentageInfo(int id, DateTime from, DateTime until)
-        {
-            var query = new Dictionary<string, string>
-            {
-                ["from"] = from.ToString(),
-                ["until"] = until.ToString()
-            };
-
-            var result = await _httpClient.GetFromJsonAsync<List<UsersTime>>(QueryHelpers.AddQueryString(($"/api/chats/chat-info/user-counter/{id}"), query));
-            return result;
-        }
-
-
-        public async Task<List<ChatPersonInfoDTO>> GetTotalFolderUsersInfo(int id, DateTime from, DateTime until)
-        {
-            var query = new Dictionary<string, string>
-            {
-                ["from"] = from.ToString(),
-                ["until"] = until.ToString()
-            };
-
-            var result = await _httpClient.GetFromJsonAsync<List<ChatPersonInfoDTO>>(QueryHelpers.AddQueryString(($"/api/chats/chat-users/{id}"), query));
-            return result;
-        }
-
-        public async Task<bool> AlreadyHasUser()
-        {
-            var result = await _httpClient.GetFromJsonAsync<bool>("/api/users/first");
-            return result;
-        }
-
-
     }
 }

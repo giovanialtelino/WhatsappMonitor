@@ -50,34 +50,10 @@ wordsTime="@words" />
     protected override async Task OnInitializedAsync()
     {
         await GetTotalFolderInfo();
-        await GetWordTimeInfo();
-        await GetMessageTimeInfo();
     }
 
     public async Task GetTotalFolderInfo()
     {
         totalInfo = await apiServices.GetTotalFolderInfo(Id, from, until);
     }
-
-    public async Task GetWordTimeInfo()
-    {
-        words = await apiServices.GetWordTimeInfo(Id, from, until);
-    }
-
-    public async Task GetMessageTimeInfo()
-    {
-        messages = await apiServices.GetMessageTimeInfo(Id, from, until);
-    }
-
-    public async Task GetUserPercentageInfo()
-    {
-        users = await apiServices.GetUserPercentageInfo(Id, from, until);
-    }
-
-    //pie chart by user
-
-    //something like github push register
-
-
-
 }

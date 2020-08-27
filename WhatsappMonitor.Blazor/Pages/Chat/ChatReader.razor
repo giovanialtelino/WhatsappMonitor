@@ -1,7 +1,6 @@
 @page "/chatReader"
-
 @inject Services.ApiService apiServices
-@using WhatsappMonitor.Shared.Models;
+@using WhatsappMonitor.Shared.Models
 
 @if(chats == null)
 {
@@ -10,33 +9,27 @@
 else
 {
 
-<ul>
-    <div class="form-group row" style="justify-content: start;">
-        <div class="col-3">
-            <div class="form-group row">
-                <label for="inputEmail3" class="col-form-label col-5">@currentPage / @totalPages</label>
-                <div class="btn-group " role="group" aria-label="Menu bar">
-                    <button type="button" class="btn btn-primary" @onclick="BackChat" disabled="@allowBack">
-                        <span class="oi oi-caret-left" aria-hidden="true"></span>
-                    </button>
-                    <button type="button" class="btn btn-primary" @onclick="NextChat" disabled="@allowNext">
-                        <span class="oi oi-caret-right" aria-hidden="true"></span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-3">
-            <div class="form-group row">
-                <label for="inputEmail3" class="col-form-label col-5">Jump to Date</label>
-                <input type="date" @bind="@dateJump" class="form-control col-5">
-                <button type="button" class="btn btn-primary col-2" @onclick="JumpDate">
+<div class="form-row" style="justify-content: start;">
+    <div class="form-group col-3">
+ <input type="date" @bind="@dateJump" class="form-control col-7">
+                <button type="button" class="btn btn-primary form-control col-3" @onclick="JumpDate">
                     <span class="oi oi-target" aria-hidden="true"></span>
                 </button>
-            </div>
-        </div>
     </div>
-</ul>
+
+    <div class="form-group col-3">
+        <input type="text" class="form-control" placeholder="Search for a word"/>
+    <button type="button" class="btn btn-primary form-control">Search</button>
+    </div>
+
+    <div class="form-group col-2">
+    <button type="button" class="btn btn-primary form-control">First Message</button>
+    </div>
+
+    <div class="form-group col-2">
+    <button type="button" class="btn btn-primary form-control">Last Message</button>
+    </div>
+</div>
 
 <ChatComponent
 chats = "@chats" />
@@ -46,7 +39,7 @@ chats = "@chats" />
 @code {
     [Parameter]
     public int Id { get; set; }
-    List<Chat> chats;
+    List<ChatMessage> chats;
     int skip = 0;
     DateTime dateJump;
     int take = 25;
@@ -63,17 +56,8 @@ chats = "@chats" />
 
     public async Task LoadChat()
     {
-        var result = await apiServices.LoadChat(Id, skip, take);
-        chats = result.Item2;
-
-        var pagination = result.Item1;
-
-        skip = pagination.Pagination;
-        take = pagination.Take;
-        totalPages = pagination.TotalPages;
-        allowBack = !pagination.AllowBack;
-        allowNext = !pagination.AllowNext;
-        currentPage = pagination.CurrentPage;
+        var result = await apiServices.LoadChatBefore(Id, DateTime.Now());
+        chats = result;
     }
 
     public async Task BackChat()

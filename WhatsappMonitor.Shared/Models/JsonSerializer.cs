@@ -1,5 +1,6 @@
 using System;
 
+//Json to class, used to convert a JSON file.
 namespace WhatsappMonitor.Shared.Models
 {
     public class RootWhatsapp{

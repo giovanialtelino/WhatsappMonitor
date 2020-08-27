@@ -38,15 +38,45 @@ namespace WhatsappMonitor.Shared.Models
         [Required]
         [DisplayName("Message Counter")]
         [JsonPropertyName("messageCounterPercentage")]
-        public int MessageCounterPercentage { get; set; }
+        public decimal MessageCounterPercentage { get; set; }
 
         [Required]
         [DisplayName("Words Counter")]
         [JsonPropertyName("wordsCounterPercentage")]
-        public int WordsCounterPercentage { get; set; }
+        public decimal WordsCounterPercentage { get; set; }
         [DisplayName("To Delete")]
         [JsonPropertyName("toDelete")]
         public bool ToDelete { get; set; }
+        public ParticipantDTO() { }
+
+         public ParticipantDTO(string personName, DateTime firstMessage, DateTime lastMessage, int messageCounter, int wordsCounter)
+        {
+            PersonName = personName;
+            NewName = personName;
+            ToDelete = false;
+            FirstMessage = firstMessage;
+            LastMessage = lastMessage;
+            MessageCounter = messageCounter;
+            WordsCounter = wordsCounter;
+        }
+        public ParticipantDTO(string personName, DateTime firstMessage, DateTime lastMessage, int messageCounter, int wordsCounter, decimal messageCounterPercentage, decimal wordsCounterPercentage)
+        {
+            PersonName = personName;
+            NewName = personName;
+            ToDelete = false;
+            FirstMessage = firstMessage;
+            LastMessage = lastMessage;
+            MessageCounter = messageCounter;
+            WordsCounter = wordsCounter;
+            MessageCounterPercentage = messageCounterPercentage;
+            WordsCounterPercentage = wordsCounterPercentage;
+        }
+
+        public void AddMessageAndWordPercentage(decimal messageCounterPercentage, decimal wordsCounterPercentage)
+        {
+            this.MessageCounterPercentage = messageCounterPercentage;
+            this.WordsCounterPercentage = wordsCounterPercentage;
+        }
     }
 
     public class ChatUploadDTO

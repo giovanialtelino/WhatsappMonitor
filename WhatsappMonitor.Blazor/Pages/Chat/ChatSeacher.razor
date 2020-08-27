@@ -1,7 +1,7 @@
 @page "/chatSearcher"
 
 @inject Services.ApiService apiServices
-@using WhatsappMonitor.Shared.Models;
+@using WhatsappMonitor.Shared.Models
 
 <div class="form-row">
     <div class="col-md-4">
@@ -27,7 +27,7 @@ chats = "@chats" />
 @code {
     [Parameter]
     public int Id { get; set; }
-    List<Chat> chats;
+    List<ChatMessage> chats;
     string searchChat = "";
     int skip = 0;
     int take = 25;

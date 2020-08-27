@@ -15,6 +15,21 @@
     <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
     <script src="~/_content/BlazorInputFile/inputfile.js"></script>
     <link href="css/site.css" rel="stylesheet" />
+
+<script suppress-error="BL9992">
+    window.getScrollToTop =  (selector) => {
+            if (selector){
+            return document.querySelector(selector).scrollTop}
+        }
+
+    window.getMaxScrollHeight = (selector) => {
+        if(selector){
+            return document.querySelector(selector).scrollHeight - document.querySelector(selector).clientHeight }
+    }
+</script>
+
+
+
 </head>
 <body>
     <app>

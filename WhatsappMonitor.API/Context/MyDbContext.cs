@@ -11,29 +11,28 @@ namespace WhatsappMonitor.API.Context
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             //postgresql://postgres:1234@localhost:5433/postgres
-            optionsBuilder.UseNpgsql("Server=127.0.0.1;Port=5432;Database=wmonitor;User Id=whatsapp;Password=whatsappmonitor;");
+            optionsBuilder.UseNpgsql("Server=127.0.0.1;Port=5432;Database=whatsapp1;User Id=whatsapp;Password=whatsappmonitor;");
             base.OnConfiguring(optionsBuilder);
         }
 
-//psql "dbname=wmonitor host=127.0.0.1 user=whatsapp password=whatsappmonitor port=5432 sslmode=require"
+        //psql "dbname=wmonitor host=127.0.0.1 user=whatsapp password=whatsappmonitor port=5432 sslmode=require"
         protected override void OnModelCreating(ModelBuilder modelbuilder)
         {
-            modelbuilder.Entity<Entity>().ToTable("Group");
-            modelbuilder.Entity<Entity>(entity =>
+            modelbuilder.Entity<Folder>().ToTable("Folder");
+            modelbuilder.Entity<Folder>(entity =>
             {
-                entity.HasKey(e => e.EntityId);
+                entity.HasKey(e => e.FolderId);
                 entity.HasIndex(e => e.Name).IsUnique();
-                entity.HasMany(e => e.Chats);
-                entity.Property(e => e.EntityId).ValueGeneratedOnAdd();
-                entity.HasMany(e => e.Chats);
+                entity.HasMany(e => e.FolderMessages);
+                entity.Property(e => e.FolderId).ValueGeneratedOnAdd();
                 entity.HasMany(e => e.Uploads);
             });
 
-            modelbuilder.Entity<Chat>().ToTable("Chat");
-            modelbuilder.Entity<Chat>(entity =>
+            modelbuilder.Entity<ChatMessage>().ToTable("Chat");
+            modelbuilder.Entity<ChatMessage>(entity =>
             {
-                entity.HasKey(e => e.ChatId);
-                entity.Property(e => e.ChatId).ValueGeneratedOnAdd();
+                entity.HasKey(e => e.ChatMessageId);
+                entity.Property(e => e.ChatMessageId).ValueGeneratedOnAdd();
             });
 
             modelbuilder.Entity<Upload>().ToTable("Upload");
@@ -43,20 +42,10 @@ namespace WhatsappMonitor.API.Context
                 entity.HasIndex(e => e.FileName);
                 entity.Property(e => e.UploadId).ValueGeneratedOnAdd();
             });
-
-            modelbuilder.Entity<User>().ToTable("User");
-            modelbuilder.Entity<User>(entity =>
-            {
-                entity.HasKey(e => e.UserId);
-                entity.Property(e => e.UserId).ValueGeneratedNever();
-                entity.HasMany(e => e.RefreshToken);
-            });
         }
 
-        public DbSet<Entity> Entities { get; set; }
-        public DbSet<Chat> Chats { get; set; }
+        public DbSet<Folder> Entities { get; set; }
+        public DbSet<ChatMessage> Chats { get; set; }
         public DbSet<Upload> Uploads { get; set; }
-        public DbSet<User> Users { get; set; }
-        public DbSet<RefreshToken> RefreshTokens { get; set; }
     }
 }
