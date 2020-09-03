@@ -36,14 +36,14 @@ namespace WhatsappMonitor.API.Controllers
             return await _repo.GetChatsBefore(id, date);
         }        
 
-        [HttpGet("search/{id}/{message}/{skip}/{take}")]
-        public async Task<ActionResult<List<ChatMessage>>> SearchChat(int id, string message, int skip, int take)
+        [HttpGet("search/{id}/{message}")]
+        public async Task<ActionResult<List<ChatMessage>>> SearchChat(int id, string message)
         {
-            return await _repo.SearchEntityChatText(message, id, skip, take);
+            return await _repo.SearchEntityChatText(message, id);
         }
 
         [HttpGet("search-date/{id}")]
-        public async Task<ActionResult<int>> SearchChat(int id, [FromQuery] string startDate)
+        public async Task<ActionResult<int>> SearchChatDate(int id, [FromQuery] string startDate)
         {
             return await _repo.SearchEntityChatTextByDate(id, startDate);
         }

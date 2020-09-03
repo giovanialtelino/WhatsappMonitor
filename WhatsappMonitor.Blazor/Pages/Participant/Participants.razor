@@ -15,8 +15,8 @@ else if (users != null && alertUpdate == false)
             <option value="name">Name</option>
             <option value="firstMessage">First Message</option>
             <option value="lastMessage">Last Message</option>
-            <option value="messageP">Message %</option>
-            <option value="wordP">Word %</option>
+            <option value="messageP">Message Count</option>
+            <option value="wordP">Word Count</option>
         </select>
     </div>
     <div class="form-group col-2">
@@ -92,34 +92,37 @@ else if (users != null && alertUpdate == false)
 }
 else if (users != null && alertUpdate == true)
 {
+
+@if(existingChange()){
 <div class="alert alert-danger" role="alert">
     <h4 class="alert-heading">Changes</h4>
-    <p>The changes listed bellow can't be reversed, if you merge or delete a person you won't be able to revert it back.</p>
+    <p>The changes listed bellow can't be reversed, if you merge or delete a person you won't be able to revert it back.
+    </p>
     <hr>
     @foreach(var i in users)
     {
-        @if(i.NewName != i.PersonName && !String.IsNullOrWhiteSpace(i.NewName) && i.ToDelete == false)
-        {
-            <p>@i.PersonName will be changed to @i.NewName</p>
-        }else if(i.ToDelete == true)
-        {
-            <p>@i.PersonName will be deleted</p>
-        }
+    @if(i.NewName != i.PersonName && !String.IsNullOrWhiteSpace(i.NewName) && i.ToDelete == false)
+    {
+    <p>@i.PersonName will be changed to @i.NewName</p>
+    }else if(i.ToDelete == true)
+    {
+    <p>@i.PersonName will be deleted</p>
     }
-   
+    }
     <hr>
-   
-</div>
+    </div>
+    }else
+    {
+    <p>No change was found.</p>
+    }
 
 <div class="form-row">
-<div class="form-group col-2">
- <button class="form-control btn-danger" @onclick="acceptChanges">Accept Changes</button>
-</div>
-<div class="form-group col-2">
-<button class="form-control btn-success" @onclick="returnChanges">Return</button>
-</div>
-
-    
+    <div class="form-group col-2">
+        <button class="form-control btn-danger" @onclick="acceptChanges">Accept Changes</button>
+    </div>
+    <div class="form-group col-2">
+        <button class="form-control btn-success" @onclick="returnChanges">Return</button>
+    </div>
 </div>
 
 
@@ -129,43 +132,42 @@ else if (users != null && alertUpdate == true)
     [Parameter]
     public int Id { get; set; }
     List<ParticipantDTO> users;
-
-     public bool alertUpdate = false;
-
-    string orderType = "crescent";
+    public bool alertUpdate = false;
+     string orderType = "crescent";
     string orderList = "name";
     protected override async Task OnInitializedAsync()
     {
         await GetParticipants();
-        
     }
-
    
     public async Task GetParticipants()
     {
         users = await apiServices.GetParticipants(Id);
-     }
-
-    public async Task EditPersonName(ParticipantDTO dto)
-    {
-         await apiServices.UpdateChatPersonName(Id, dto);
-        //await GetParticipants();
-    }
-
-    public async Task DeletePersonName(string name)
-    {
-         await apiServices.DeleteChatPersonName(Id, name);
-        await GetParticipants();
     }
 
     public void showAlertUpdate()
     {
-        alertUpdate = true;
+     alertUpdate = true;
     }
 
     public void returnChanges()
     {
         alertUpdate = false;
+    }
+
+    public bool existingChange()
+    {
+    foreach(var i in users)
+    {
+        if(i.NewName != i.PersonName && !String.IsNullOrWhiteSpace(i.NewName) && i.ToDelete == false)
+        {
+            return true;    
+        }else if(i.ToDelete == true)
+        {
+            return true;
+        }
+    }
+        return false;
     }
 
     public async Task acceptChanges()

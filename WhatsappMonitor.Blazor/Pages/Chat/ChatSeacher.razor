@@ -1,40 +1,62 @@
 @page "/chatSearcher"
-
 @inject Services.ApiService apiServices
 @using WhatsappMonitor.Shared.Models
 
+<br/>
+
 <div class="form-row">
     <div class="col-md-4">
-        <input type="text" class="form-control" placeholder="Seach for a word" @bind="searchChat">
+        <input type="text" class="form-control" placeholder="Seach for a word" @bind="search">
     </div>
     <div class="col-md-2">
-        <button type="button" class="btn btn-primary" @onclick="SearchChat">Buscar</button>
+        <button class="btn btn-primary form-control" @onclick="SearchChat">Buscar</button>
     </div>
 </div>
 
 <hr>
 
-@if(chats == null)
+@if(chats != null && loading == false)
 {
-
-}
-else
+@if(chats.Count()> 0){
+<ul class="scrollable-chat-list" id="scroll-list" style="padding-left: 0px;">
+@foreach (var chat in chats)
 {
-<ChatComponent
-chats = "@chats" />
+<li class="list-group-item short-padding li-hoverable">
+   <div class="form-row">
+        <div class="col-2 no-margin-td">
+           <p class="no-margin-td">@chat.PersonName</p>
+       </div>
+       <div class="col-2 no-margin-td">
+           <p class="no-margin-td">@chat.MessageTime</p>
+       </div>
+       <div class="col-8 no-margin-td">
+           <p class="no-margin-td">@chat.Message</p>
+       </div>
+   </div>
+</li>
 }
+</ul>} else {
+    <p>Nothing found</p>
+}
+} else if(loading == true) {
+    <p>Loading...</p>
+} 
 
 @code {
     [Parameter]
     public int Id { get; set; }
     List<ChatMessage> chats;
-    string searchChat = "";
-    int skip = 0;
-    int take = 25;
+    string search = "";
+    bool loading = false;
 
     public async Task SearchChat()
     {
-        chats = await apiServices.SearchChatWord(Id, searchChat, skip, take);
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+        loading = true;
+        chats = await apiServices.SearchChatWord(Id, search);
+        loading = false;
+        }
     }
      
 }

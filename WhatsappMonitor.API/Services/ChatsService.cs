@@ -18,7 +18,7 @@ namespace WhatsappMonitor.API.Services
         Task<List<ChatMessage>> GetChatsAfter(int id, string last);
         Task<List<ChatMessage>> GetChatsBefore(int id, string first);
         Task<int> SearchEntityChatTextByDate(int id, string date);
-        Task<List<ChatMessage>> SearchEntityChatText(string text, int id, int pagination, int take);
+        Task<List<ChatMessage>> SearchEntityChatText(string text, int id);
         Task<List<ParticipantDTO>> GetChatParticipants(int id);
         Task<List<ParticipantDTO>> UpdateParticipantsChat(int FolderId, List<ParticipantDTO> participants);
         Task<List<ChatUploadDTO>> GetChatUploadDate(int id);
@@ -95,17 +95,11 @@ namespace WhatsappMonitor.API.Services
             }
             return listChat;
         }
-        public async Task<List<ChatMessage>> SearchEntityChatText(string text, int id, int pagination, int take)
+        public async Task<List<ChatMessage>> SearchEntityChatText(string text, int id)
         {
-            var cleanTake = 25;
-            var cleanPagination = 0;
-            if (take >= 0 && take <= 100) cleanTake = take;
-            if (pagination >= 0) cleanPagination = pagination;
-
             var messages = await _context.Chats.Where(c => c.FolderId == id).OrderByDescending(c => c.MessageTime).ToListAsync();
             var findText = SearchChatText(text, messages);
-            var result = findText.Skip(cleanPagination).ToList(); //SearchEntityChatText
-            return result;
+            return findText;
         }
 
         public async Task<List<ParticipantDTO>> GetChatParticipants(int id)

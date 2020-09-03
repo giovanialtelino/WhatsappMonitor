@@ -92,9 +92,9 @@ namespace WhatsappMonitor.Blazor.Services
             var result = await _httpClient.DeleteAsync($"/api/chats/delete-name/{id}/{name}");
         }
 
-        public async Task<List<ChatMessage>> SearchChatWord(int id, string word, int pag, int take)
+        public async Task<List<ChatMessage>> SearchChatWord(int id, string word)
         {
-            var result = await _httpClient.GetFromJsonAsync<List<ChatMessage>>($"/api/chats/search/{id}/{word}/{pag}/{take}");
+            var result = await _httpClient.GetFromJsonAsync<List<ChatMessage>>($"/api/chats/search/{id}/{word}");
             return result;
         }
 
@@ -116,6 +116,9 @@ namespace WhatsappMonitor.Blazor.Services
 
         public async Task<List<ChatMessage>> LoadChatBefore(int id, DateTime date)
         {
+            var l = new List<ChatMessage>();
+    
+            
             var query = new Dictionary<string, string>
             {
                 ["date"] = date.ToString()
