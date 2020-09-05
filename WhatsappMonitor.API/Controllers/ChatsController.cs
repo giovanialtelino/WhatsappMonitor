@@ -34,7 +34,19 @@ namespace WhatsappMonitor.API.Controllers
         public async Task<ActionResult<List<ChatMessage>>> GetChatsBefore(int id, [FromQuery] string date)
         {
             return await _repo.GetChatsBefore(id, date);
-        }        
+        }   
+
+         [HttpGet("first-message/{id}")]
+        public async Task<ActionResult<List<ChatMessage>>> GetFirstMessage(int id)
+        {
+            return await _repo.GetFirstMessage(id);
+        }
+
+        [HttpGet("last-message/{id}")]
+        public async Task<ActionResult<List<ChatMessage>>> GetLastMessage(int id)
+        {
+            return await _repo.GetLastMessage(id);
+        }       
 
         [HttpGet("search/{id}/{message}")]
         public async Task<ActionResult<List<ChatMessage>>> SearchChat(int id, string message)
@@ -42,8 +54,8 @@ namespace WhatsappMonitor.API.Controllers
             return await _repo.SearchEntityChatText(message, id);
         }
 
-        [HttpGet("search-date/{id}")]
-        public async Task<ActionResult<int>> SearchChatDate(int id, [FromQuery] string startDate)
+        [HttpGet("jump-date/{id}")]
+        public async Task<ActionResult<List<ChatMessage>>> SearchChatDate(int id, [FromQuery] string startDate)
         {
             return await _repo.SearchEntityChatTextByDate(id, startDate);
         }
@@ -64,14 +76,6 @@ namespace WhatsappMonitor.API.Controllers
         public async Task DeleteDateChat(int id, [FromBody] ChatUploadDTO dto)
         {
             await _repo.DeleteDateChat(id, dto);
-        }
-
-        [HttpGet("chat-info/{id}")]
-        public async Task<TotalFolderInfoDTO> GetChatInfo(int id, [FromQuery] string from, [FromQuery] string until)
-        {
-            var cleanFrom = from ?? "";
-            var cleanUntil = until ?? "";
-            return await _repo.GetFullChatInfo(id, cleanFrom, cleanUntil);
         }
 
         [HttpGet("chat-participants/{id}")]

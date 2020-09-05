@@ -26,8 +26,28 @@
         if(selector){
             return document.querySelector(selector).scrollHeight - document.querySelector(selector).clientHeight }
     }
-</script>
 
+    window.setScrollTop = (selector) => {
+        if(selector){
+            document.querySelector(selector).scrollTop = 0;
+            return 0;
+        }
+    }
+
+        window.setScrollBottom = (selector) => {
+        if(selector){
+            document.querySelector(selector).scrollTop = document.querySelector(selector).scrollHeight;
+            return 0;
+        }    }
+
+          window.setScrollDown = (selector) => {
+        if(selector){
+            document.querySelector(selector).scrollTop = 250;
+            return 0;
+        }    }
+
+
+</script>
 
 
 </head>

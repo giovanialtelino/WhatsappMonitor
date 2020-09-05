@@ -1,54 +1,56 @@
 @page "/chatReader"
-@inject Services.ApiService apiServices
+
 @using WhatsappMonitor.Shared.Models
+
+@inject Services.ApiService apiServices
 @inject IJSRuntime JSRuntime
 
 @if(chats == null)
 {
 <p>Loading chats...</p>
 }
-else
+else if(chats.Count() > 0)
 {
-    <p> @ScrollTop </p>
-    <p> @MessageCount </p>
-    <p> @MaxSize </p>
-    
-<div class="form-row" style="justify-content: start;">
-    <div class="form-group col-3">
- <input type="date" @bind="@dateJump" class="form-control col-7">
-                <button type="button" class="btn btn-primary form-control col-3" >
-                    <span class="oi oi-target" aria-hidden="true"></span>
-                </button>
-    </div>
+    <div class="form-row" style="justify-content: start;">
+        
+        <div class="form-group col-2">
+        <input type="date" @bind="@dateJump" class="form-control">
+        </div>
 
     <div class="form-group col-2">
-    <button type="button" class="btn btn-primary form-control">First Message</button>
+        <button type="button" class="btn btn-primary form-control col-3" @onclick="@GotoDate">
+        <span class="oi oi-target" aria-hidden="true"></span>
+        </button>
+        </div>
+
+
+        <div class="form-group col-2">
+        <button type="button" class="btn btn-primary form-control" @onclick="@GoToFirstMessage">First Message</button>
+        </div>
+
+        <div class="form-group col-2">
+        <button type="button" class="btn btn-primary form-control" @onclick="@GoToLastMessage">Last Message</button>
+        </div>
     </div>
 
-    <div class="form-group col-2">
-    <button type="button" class="btn btn-primary form-control">Last Message</button>
-    </div>
-</div>
-
-<ul class="scrollable-chat-list" id="scroll-list" style="padding-left: 0px;" @onscroll="@OnScroll">
-@foreach (var chat in chats)
-{
-<li class="list-group-item short-padding li-hoverable">
-   <div class="form-row">
-        <div class="col-2 no-margin-td">
-           <p class="no-margin-td">@chat.PersonName</p>
-       </div>
-       <div class="col-2 no-margin-td">
-           <p class="no-margin-td">@chat.MessageTime</p>
-       </div>
-       <div class="col-8 no-margin-td">
-           <p class="no-margin-td">@chat.Message</p>
-       </div>
+    <ul class="scrollable-chat-list" id="scroll-list" style="padding-left: 0px;" @onscroll="@Scroll">
+        @foreach (var chat in chats)
+        {
+            <li class="list-group-item short-padding li-hoverable">
+            <div class="form-row">
+            <div class="col-2 no-margin-td">
+            <p class="no-margin-td">@chat.PersonName</p>
+            </div>
+            <div class="col-2 no-margin-td">
+            <p class="no-margin-td">@chat.MessageTime</p>
+            </div>
+            <div class="col-8 no-margin-td">
+            <p class="no-margin-td">@chat.Message</p>
+            </div>
    </div>
 </li>
 }
 </ul>
-
 }
 
 @code {
@@ -57,31 +59,53 @@ else
     List<ChatMessage> chats;
     DateTime dateJump;
     public int ScrollTop { get; set; }    
-    public int MessageCount {get;set; }
     public int MaxSize {get;set; }
+    private bool Semaphore {get;set;}
 
-    private async Task OnScroll(EventArgs e)
+    private async Task Scroll(EventArgs e)
    {
       MaxSize = await MaxScrollHeight();
       ScrollTop = await GetScroll();
-      MessageCount = chats.Count();
 
-      if(ScrollTop < 200){
-          await LoadChatBefore();
-      }else if (ScrollTop - 200 > MaxSize) {
+    if(Semaphore == false){
+        if(ScrollTop < 250){
+          Semaphore = true;
           await LoadChatAfter();
+      }else if((ScrollTop + 250) > MaxSize)
+      {
+          Semaphore = true;
+          await LoadChatBefore();
       }
-   }
+    }      
+
+        MaxSize = await MaxScrollHeight();
+        ScrollTop = await GetScroll();
+    }
 
     private async Task<int> GetScroll()
     {
-    return await JSRuntime.InvokeAsync<int>("getScrollToTop", "#scroll-list");
+        return await JSRuntime.InvokeAsync<int>("getScrollToTop", "#scroll-list");
+    }
+
+    private async Task ZeroScroll()
+    {
+        await JSRuntime.InvokeAsync<int?>("setScrollTop", "#scroll-list");
     }     
 
-private async Task<int> MaxScrollHeight()
-{
-    return await JSRuntime.InvokeAsync<int>("getMaxScrollHeight", "#scroll-list");
-}
+    private async Task BottomScroll()
+    {
+        await JSRuntime.InvokeAsync<int?>("setScrollBottom", "#scroll-list");
+    }     
+
+    private async Task<int> MaxScrollHeight()
+    {
+        return await JSRuntime.InvokeAsync<int>("getMaxScrollHeight", "#scroll-list");
+    }
+   
+    private async Task SetScrollDown()
+    {
+        await JSRuntime.InvokeAsync<int?>("setScrollDown", "#scroll-list");
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -95,31 +119,39 @@ private async Task<int> MaxScrollHeight()
         chats = result;
     }
 
-    public async Task LoadChatBefore()
-    {
-        var lastDate = chats.Max(c => c.MessageTime);
-    var result = await apiServices.LoadChatBefore(Id, lastDate )        ;
-
-    if((result.Count() + chats.Count()) > 800){
-        chats.RemoveRange(0, 200);    
-    }
-
-    chats.AddRange(result);
-
-    }
-
     public async Task LoadChatAfter()
     {
-var lastDate = chats.Min(c => c.MessageTime);
-    var result = await apiServices.LoadChatBefore(Id, lastDate )        ;
-
-  if((result.Count() + chats.Count()) > 800){
-        chats.RemoveRange(chats.Count - 200, 200);    
+        var firstDate = chats.Max(c => c.MessageTime);
+        var result = await apiServices.LoadChatAfter(Id, firstDate );
+        chats.InsertRange(0, result);
+        Semaphore = false;
     }
 
-    chats.InsertRange(0, result);
-
+    public async Task LoadChatBefore()
+    {
+        var lastDate = chats.Min(c => c.MessageTime);
+        var result = await apiServices.LoadChatBefore(Id, lastDate );
+        chats.AddRange(result);
+        Semaphore = false;
     }
-    
 
-}
+    public async Task GoToFirstMessage()
+    {
+        var result = await apiServices.GoToFirstMessage(Id);
+        chats = result;
+        await BottomScroll();
+    }
+
+    public async Task GoToLastMessage()
+    {
+        var result = await apiServices.GoToLastMessage(Id);
+        chats = result;
+        await ZeroScroll();
+    }
+
+    public async Task GotoDate()
+    {
+        var result = await apiServices.JumpChatToDate(Id, dateJump);
+        chats = result;
+    }
+} 

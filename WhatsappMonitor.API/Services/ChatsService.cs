@@ -17,13 +17,14 @@ namespace WhatsappMonitor.API.Services
         Task<Tuple<PaginationDTO, List<ChatMessage>>> GetAllChatsPagination(int id, int pagination, int take);
         Task<List<ChatMessage>> GetChatsAfter(int id, string last);
         Task<List<ChatMessage>> GetChatsBefore(int id, string first);
-        Task<int> SearchEntityChatTextByDate(int id, string date);
+        Task<List<ChatMessage>> GetFirstMessage(int id);
+        Task<List<ChatMessage>> GetLastMessage(int id);
+        Task<List<ChatMessage>> SearchEntityChatTextByDate(int id, string date);
         Task<List<ChatMessage>> SearchEntityChatText(string text, int id);
         Task<List<ParticipantDTO>> GetChatParticipants(int id);
         Task<List<ParticipantDTO>> UpdateParticipantsChat(int FolderId, List<ParticipantDTO> participants);
         Task<List<ChatUploadDTO>> GetChatUploadDate(int id);
         Task DeleteDateChat(int FolderId, ChatUploadDTO dto);
-        Task<TotalFolderInfoDTO> GetFullChatInfo(int FolderId, string from, string until);
         Task ProcessEntityFiles();
     }
 
@@ -35,12 +36,53 @@ namespace WhatsappMonitor.API.Services
             _context = context;
         }
 
+        public async Task<List<ChatMessage>> SearchEntityChatTextByDate(int id, string date)
+        {
+            var moved = 0;
+            var initialDate = DateTime.Parse(date);
+            var parsedDate = initialDate;
+            var chatMessage = await _context.Chats.Where(c => c.FolderId == id).OrderByDescending(c => c.MessageTime).ToListAsync();
+
+            int? index = null;
+            while (index == null)
+            {
+                var dateIndex = chatMessage.FindLastIndex(c => c.MessageTime == parsedDate);
+                if (dateIndex != -1)
+                {
+                    index = dateIndex;
+                }
+                else
+                {
+                    moved++;
+                    if (moved < 35)
+                    {
+                        parsedDate = parsedDate.AddDays(1);
+                    }
+                    else if (moved == 35)
+                    {
+                        parsedDate = initialDate;
+                        parsedDate = parsedDate.AddDays(-1);
+                    }
+                    else if (moved > 35 && moved < 70)
+                    {
+                        parsedDate = parsedDate.AddDays(-1);
+                    }
+                    else if(moved == 70)
+                    {
+                        return await GetLastMessage(id);
+                    }
+                }
+            }
+
+            return chatMessage.GetRange(index.Value - 200, 400);
+        }
+
         public async Task<List<ChatMessage>> GetChatsAfter(int id, string last)
         {
             var parsedDate = DateTime.Parse(last);
             var chatMessage = await _context.Chats.Where(c => c.FolderId == id && c.MessageTime > parsedDate).OrderByDescending(c => c.MessageTime).ToListAsync();
 
-            return chatMessage.Take(200).ToList();
+            return chatMessage.TakeLast(200).ToList();
         }
         public async Task<List<ChatMessage>> GetChatsBefore(int id, string first)
         {
@@ -48,6 +90,18 @@ namespace WhatsappMonitor.API.Services
             var chatMessage = await _context.Chats.Where(c => c.FolderId == id && c.MessageTime < parsedDate).OrderByDescending(c => c.MessageTime).ToListAsync();
 
             return chatMessage.Take(200).ToList();
+        }
+
+        public async Task<List<ChatMessage>> GetFirstMessage(int id)
+        {
+            var chatMessage = await _context.Chats.Where(c => c.FolderId == id).OrderByDescending(c => c.MessageTime).ToListAsync();
+            return chatMessage.TakeLast(250).ToList();
+        }
+
+        public async Task<List<ChatMessage>> GetLastMessage(int id)
+        {
+            var chatMessage = await _context.Chats.Where(c => c.FolderId == id).OrderByDescending(c => c.MessageTime).ToListAsync();
+            return chatMessage.Take(250).ToList();
         }
 
         public async Task<Tuple<PaginationDTO, List<ChatMessage>>> GetAllChatsPagination(int id, int skip, int take)
@@ -75,13 +129,6 @@ namespace WhatsappMonitor.API.Services
             return new Tuple<PaginationDTO, List<ChatMessage>>(paginationDto, result);
         }
 
-        public async Task<int> SearchEntityChatTextByDate(int id, string date)
-        {
-            var parsedDate = DateTime.Parse(date);
-            var ChatMessage = await _context.Chats.Where(c => c.FolderId == id && c.MessageTime >= parsedDate).OrderByDescending(c => c.MessageTime).CountAsync();
-
-            return ChatMessage - 1;
-        }
         private List<ChatMessage> SearchChatText(string text, List<ChatMessage> messages)
         {
             var listChat = new List<ChatMessage>();
@@ -223,50 +270,6 @@ namespace WhatsappMonitor.API.Services
                 var startToFinish = new ChatInfoDate { From = fromMin, Until = untilMax };
                 return startToFinish;
             }
-        }
-
-        public async Task<TotalFolderInfoDTO> GetFullChatInfo(int FolderId, string from, string until)
-        {
-            var checkedDates = await CheckDates(from, until);
-            var messages = await _context.Chats.Where(e => e.FolderId == FolderId && e.MessageTime > checkedDates.From && e.MessageTime < checkedDates.Until).ToListAsync();
-            var totalMessages = messages.Count();
-            var wordCounter = 0;
-            var superWordList = new List<string>();
-
-            foreach (var item in messages)
-            {
-                var splits = item.Message.Split(new char[] { '.', '?', '!', ' ', ';', ':', ',' }, StringSplitOptions.RemoveEmptyEntries);
-                wordCounter = wordCounter + splits.Count();
-                foreach (var word in splits)
-                {
-                    if (word.Length > 5)
-                    {
-                        superWordList.Add(word);
-                    }
-                }
-            }
-
-            var commonHours = messages.GroupBy(c => c.MessageTime.Hour).Select(c => new Tuple<string, int>(c.Key.ToString(), c.Count())).ToList();
-
-            var totalHours = commonHours.Sum(c => c.Item2);
-            var commonHoursPercentage = new List<Tuple<string, double>>();
-
-            foreach (var item in commonHours)
-            {
-                double percentage = (item.Item2 * 100) / totalMessages;
-                commonHoursPercentage.Add(new Tuple<string, double>(item.Item1, percentage));
-            }
-
-            var commonWords = superWordList.GroupBy(c => c).Select(c => new Tuple<string, double>(c.Key.ToString(), c.Count())).OrderByDescending(c => c.Item2).Take(10).ToList();
-
-            var total = new TotalFolderInfoDTO
-            {
-                TotalMessage = totalMessages,
-                TotalWords = wordCounter,
-                CommonWords = commonWords,
-                CommonHours = commonHoursPercentage.OrderByDescending(c => c.Item2).Take(10).ToList()
-            };
-            return total;
         }
 
         private DateTime? ValidDate(string line)
