@@ -27,9 +27,13 @@ namespace WhatsappMonitor.Blazor
 
             services.AddSingleton<Services.NewUploadService>();
 
+            var env = Environment.GetEnvironmentVariable("ApiString");
+
+            System.Console.WriteLine(env);
+
             services.AddHttpClient<Services.ApiService>(c =>
            {
-               c.BaseAddress = new Uri("http://localhost:5001");
+               c.BaseAddress = new Uri(env);
            });
         }
 

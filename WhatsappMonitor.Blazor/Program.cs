@@ -23,6 +23,10 @@ namespace WhatsappMonitor.Blazor
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                })
+                .ConfigureAppConfiguration(conf =>
+                {
+                    conf.AddEnvironmentVariables();
                 });
     }
 }

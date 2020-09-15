@@ -36,6 +36,8 @@ namespace WhatsappMonitor.API.Services
             _context = context;
         }
 
+        private static string WhatsappDate = Environment.GetEnvironmentVariable("WhatsappDate");
+
         public async Task<List<ChatMessage>> SearchEntityChatTextByDate(int id, string date)
         {
             var moved = 0;
@@ -284,7 +286,8 @@ namespace WhatsappMonitor.API.Services
 
                 var dateString = temp.Remove(temp.Length - 2);
                 var parsedDate = new DateTime();
-                if (DateTime.TryParseExact(dateString, "dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedDate))
+
+                if (DateTime.TryParseExact(dateString, WhatsappDate,  CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedDate))
                 {
                     return parsedDate;
                 }

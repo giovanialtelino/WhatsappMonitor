@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using WhatsappMonitor.Shared.Models;
@@ -10,12 +11,12 @@ namespace WhatsappMonitor.API.Context
     {
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            //postgresql://postgres:1234@localhost:5433/postgres
-            optionsBuilder.UseNpgsql("Server=127.0.0.1;Port=5432;Database=whatsapp1;User Id=whatsapp;Password=whatsappmonitor;");
+            string dbString = Environment.GetEnvironmentVariable("ConnectionString");
+
+            optionsBuilder.UseNpgsql(dbString);
             base.OnConfiguring(optionsBuilder);
         }
 
-        //psql "dbname=wmonitor host=127.0.0.1 user=whatsapp password=whatsappmonitor port=5432 sslmode=require"
         protected override void OnModelCreating(ModelBuilder modelbuilder)
         {
             modelbuilder.Entity<Folder>().ToTable("Folder");

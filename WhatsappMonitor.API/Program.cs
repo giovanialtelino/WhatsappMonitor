@@ -28,6 +28,10 @@ namespace WhatsappMonitor.API
                     .UseStartup<Startup>()
                     .UseKestrel(o =>
                     o.Limits.MaxRequestBodySize = 209715200);
+                })
+                .ConfigureAppConfiguration(conf =>
+                {
+                    conf.AddEnvironmentVariables();
                 });
     }
 }

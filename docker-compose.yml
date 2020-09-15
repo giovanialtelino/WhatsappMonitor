@@ -1,0 +1,38 @@
+version: '3'
+
+services: 
+    api:
+        container_name: whatsapp_api
+        ports: 
+            - 7000:5001
+        build:
+            context: .
+            dockerfile: DockerfileAPI
+        environment:
+            - ConnectionString=Server=db;Database=whatsapp;User Id=whatsapp;Password=whatsappmonitor
+            - WhatsappDate=dd/MM/yyyy HH:mm
+        depends_on: 
+            - db
+
+    blazor:
+        container_name: whatsapp_blazor
+        ports: 
+            - 127.0.0.1:7001:80
+        build: 
+            context: .
+            dockerfile: DockerfileBLAZOR
+        environment: 
+            - ApiString=http://api/;
+        depends_on: 
+            - api
+
+    db:
+        container_name: whatsapp_db
+        image: postgres:12
+        environment: 
+            POSTGRES_PASSWORD: whatsappmonitor
+            POSTGRES_USER: whatsapp
+            POSTGRES_DB: whatsapp
+        volumes: 
+            - /home/giovani/Documents/WhatsappPostgresql:/var/lib/postgresql/data
+
