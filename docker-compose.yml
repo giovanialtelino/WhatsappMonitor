@@ -13,6 +13,7 @@ services:
             - WhatsappDate=dd/MM/yyyy HH:mm
         depends_on: 
             - db
+    # WhatsappDate must be changed to use your own .txt date 
 
     blazor:
         container_name: whatsapp_blazor
@@ -35,4 +36,5 @@ services:
             POSTGRES_DB: whatsapp
         volumes: 
             - /home/giovani/Documents/WhatsappPostgresql:/var/lib/postgresql/data
+        # YOU MUST CHANGE THE LINE ABOVE TO A ABSOLUTE PATH CONSIDERING YOUR FILE SYSTEM, like /home/batman/batdocs/batzap.
 
