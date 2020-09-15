@@ -3,8 +3,6 @@ version: '3'
 services: 
     api:
         container_name: whatsapp_api
-        ports: 
-            - 7000:5001
         build:
             context: .
             dockerfile: DockerfileAPI

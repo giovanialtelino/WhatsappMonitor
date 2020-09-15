@@ -341,8 +341,8 @@ namespace WhatsappMonitor.API.Services
             var systemTime = DateTime.Now;
             var chatList = new List<ChatMessage>();
             var toString = Encoding.UTF8.GetString(file.FileContent);
-            var entityChat = await _context.Chats.Where(c => c.FolderId == file.FolderId).Select(c => new Tuple<string, DateTime>(c.Message, c.MessageTime)).ToListAsync();
-            var hashSet = new HashSet<Tuple<string, DateTime>>(entityChat);
+            var entityChat = await _context.Chats.Where(c => c.FolderId == file.FolderId).Select(c => new Tuple<string,string, DateTime>(c.Message, c.PersonName, c.MessageTime)).ToListAsync();
+            var hashSet = new HashSet<Tuple<string, string, DateTime>>(entityChat);
 
             string[] lines = toString.Split(
                 new[] { "\r\n", "\r", "\n" },
@@ -369,7 +369,7 @@ namespace WhatsappMonitor.API.Services
                         if (String.IsNullOrWhiteSpace(messageText) == false && String.IsNullOrWhiteSpace(messageSender) == false)
                         {
 
-                            if (!(hashSet.Contains(new Tuple<string, DateTime>(messageText, messageDate.Value))))
+                            if (!(hashSet.Contains(new Tuple<string, string, DateTime>(messageText, messageSender, messageDate.Value))))
                             {
 
                                 var newChat = new ChatMessage(messageSender, messageDate.Value, systemTime, messageText, file.FolderId);

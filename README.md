@@ -1,4 +1,4 @@
-#Whatsapp Monitor
+# Whatsapp Monitor
 
 It was supposed to be a personal CRM, or should I call it a PRM (Personal relationship management) :smile: , my original idea was to offer a open source version were you could deploy your own monitor and also a hosted version, so I could also earn some money back.
 
@@ -12,7 +12,7 @@ But still, since I had already some of the back-end ready, I decided to built it
 
 ### Deploy
 
-You can easily deploy the system with **docker-compose**, you just need to type **docker-compose up**, after you clone the repository or download the zip file to your local computer.  **BUT** you must do some changes it the docker-compose.yml file:
+You can easily deploy the system with **docker-compose**, you just need to type **docker-compose up**, after you cloned the repository or downloaded the zip file to your local computer.  **BUT** you must do some changes it the docker-compose.yml file:
 
 **WhatsappDate**: Must be updated to the date format the backup .txt, take a look [here](https://docs.microsoft.com/en-us/dotnet/api/system.datetime.tryparseexact?view=netcore-3.1#System_DateTime_TryParseExact_System_String_System_String___System_IFormatProvider_System_Globalization_DateTimeStyles_System_DateTime__) if you are in doubt of how to write the format. If you are in the USA you simple change dd/MM/yyyy HH:mm to MM/dd/yyyy HH:mm, and don't write quotes in the docker-compose.yml.
 
