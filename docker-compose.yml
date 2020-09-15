@@ -36,5 +36,5 @@ services:
             POSTGRES_DB: whatsapp
         volumes: 
             - /home/giovani/Documents/WhatsappPostgresql:/var/lib/postgresql/data
-        # YOU MUST CHANGE THE LINE ABOVE TO A ABSOLUTE PATH CONSIDERING YOUR FILE SYSTEM, like /home/batman/batdocs/batzap.
+        # YOU MUST CHANGE THE LINE ABOVE TO A ABSOLUTE PATH CONSIDERING YOUR FILE SYSTEM, like /home/batman/batdocs/batzap:/var/lib/postgresql/data
 
