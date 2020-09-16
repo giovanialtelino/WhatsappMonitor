@@ -1,14 +1,13 @@
 # Whatsapp Monitor
 
-It was supposed to be a personal CRM, or should I call it a PRM (Personal relationship management) :smile: , my original idea was to offer a open source version were you could deploy your own monitor and also a hosted version, so I could also earn some money back.
+It was supposed to be a personal CRM, or should I call it a PRM (Personal relationship management), my original idea was to offer an open-source version in which you could deploy your own monitor and also a hosted version, so I could also earn some money back.  
 
-After a kinda successful brainstorming of nice ideas about how to display the data and what was supposed to be the main functionalities of the project, I was dissapointed while I built the MVP, Whatsapp has no easy way to generate a backup of any "readable" kind from all the contacts, you can only backup a user or a group each time, and with a limit of around 40 thousand messages so there is also a great chance that you won't have all the messages from groups you are in since years ago. The whatsapp backup which is usually created daily at mid dawn only can be used by the whatsapp app, amazing!
+After a kinda successful brainstorming of nice ideas about how to display the data and what was supposed to be the main functionalities of the project, I was disappointed while I built the MVP, Whatsapp has no easy way to generate a backup of any "readable" kind from all the contacts, you can only backup a user or a group each time, and with a limit of around 40 thousand messages so there is also a great chance that you won't have all the messages from groups you are in since years ago. The Whatsapp backup which is usually created daily at mid dawn only can be used by the WhatsApp app, amazing!  
 
-I would argue that no one would like the idea to generate the backup of all the contacts which you sent message in the week, even more in a third-party app, were my target would be power users who use Whatsapp a lot, so yeah, the project is dead, RIP, but I changed the license to MIT, so you can do whatever you want with it.
+I would argue that no one would like the idea to generate the backup of all the contacts which you sent a message in the week, even more in a third-party app, where my target would be power users who use Whatsapp a lot, so yeah, the project is dead, RIP, but the project license is MIT, so you can do whatever you want with it.
+But still, since I had already some of the back-end ready, I decided to build it a little more, so I could also take a look at the Blazor server.
 
-But still, since I had already some of the back-end ready, I decided to built it a little more, so I could also take a look on Blazor server.
-
-[For the full story, thoughts and ideas, please check my blog.](https://www.giovanialtelino.com/project/whatsapp-monitor/ "blog").
+[For the full story, and software ideas, please check my blog.](https://www.giovanialtelino.com/project/whatsapp-monitor/ "blog").
 
 ### Deploy
 
