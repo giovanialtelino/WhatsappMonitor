@@ -23,7 +23,7 @@ services:
             context: .
             dockerfile: DockerfileBLAZOR
         environment: 
-            - ApiString=http://api/;
+            - ConnectionStrings:ApiString=http://api/;
         depends_on: 
             - api
 

@@ -45,7 +45,7 @@ namespace WhatsappMonitor.API.Helper
 
         public static DateTime? ValidDate(string line, string dateFormat)
         {
-            
+
 
             var start = 0;
             var datePosition = line.IndexOf('-', start);
@@ -88,7 +88,6 @@ namespace WhatsappMonitor.API.Helper
                 return "";
             }
         }
-
         public static String CleanMessage(string line)
         {
             var start = 0;
@@ -106,7 +105,6 @@ namespace WhatsappMonitor.API.Helper
                 return "";
             }
         }
-
-
+      
     }
 }

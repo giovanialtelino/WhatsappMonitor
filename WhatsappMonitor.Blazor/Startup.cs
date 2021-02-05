@@ -27,9 +27,7 @@ namespace WhatsappMonitor.Blazor
 
             services.AddSingleton<Services.NewUploadService>();
 
-            var env = Environment.GetEnvironmentVariable("ApiString");
-
-            System.Console.WriteLine(env);
+            var env = Configuration.GetConnectionString("ApiString");
 
             services.AddHttpClient<Services.ApiService>(c =>
            {

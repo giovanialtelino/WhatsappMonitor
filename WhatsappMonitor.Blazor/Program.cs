@@ -26,7 +26,10 @@ namespace WhatsappMonitor.Blazor
                 })
                 .ConfigureAppConfiguration(conf =>
                 {
-                    conf.AddEnvironmentVariables();
+                    conf
+                    .AddJsonFile("appsettings.json", true)
+                    .AddJsonFile("appsettings.Development.json", true)
+                    .AddEnvironmentVariables();
                 });
     }
 }
