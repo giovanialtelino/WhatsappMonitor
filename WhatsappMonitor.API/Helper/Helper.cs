@@ -13,7 +13,6 @@ namespace WhatsappMonitor.API.Helper
 {
     public static class DefaultHelper
     {
-
         public static List<ChatMessage> SearchChatText(string text, List<ChatMessage> messages)
         {
             var listChat = new List<ChatMessage>();
@@ -45,8 +44,6 @@ namespace WhatsappMonitor.API.Helper
 
         public static DateTime? ValidDate(string line, string dateFormat)
         {
-
-
             var start = 0;
             var datePosition = line.IndexOf('-', start);
             if (datePosition != -1)
@@ -105,6 +102,6 @@ namespace WhatsappMonitor.API.Helper
                 return "";
             }
         }
-      
+
     }
 }
