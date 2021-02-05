@@ -8,6 +8,7 @@ using WhatsappMonitor.Shared.Models;
 using WhatsappMonitor.API.Context;
 using WhatsappMonitor.API.Services;
 using System.IO;
+using Microsoft.Extensions.Configuration;
 
 namespace WhatsappMonitor.API.Controllers
 {
@@ -15,12 +16,14 @@ namespace WhatsappMonitor.API.Controllers
     [ApiController]
     public class FoldersController : Controller
     {
-        private readonly IFoldersService _repo;
-        private readonly IChatsMessageService _chat;
-        public FoldersController(MyDbContext iEntitiesService, MyDbContext iChatsService)
+        private readonly FoldersService _repo;
+        private readonly ChatsMessageService _chat;
+        private readonly IConfiguration _conf;
+        public FoldersController(MyDbContext EntitiesService, IConfiguration conf)
         {
-            this._repo = new FoldersService(iEntitiesService);
-            this._chat = new ChatsMessageService(iChatsService);
+            _conf = conf;
+            this._repo = new FoldersService(EntitiesService);
+            this._chat = new ChatsMessageService(EntitiesService, conf);
         }
 
         [HttpGet]
@@ -30,7 +33,6 @@ namespace WhatsappMonitor.API.Controllers
         }
 
         [HttpGet("{id}")]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<Folder>> GetFolderById(int id)
         {
             return await _repo.GetEntityById(id);
@@ -78,7 +80,7 @@ namespace WhatsappMonitor.API.Controllers
                 }
             }
             await _chat.ProcessEntityFiles();
-            return counter;
+            return counter; //return the number of file which were uploaded
         }
     }
 }

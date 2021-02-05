@@ -33,20 +33,6 @@ namespace WhatsappMonitor.Shared.Models
         public int FolderId { get; set; }
         public Folder Folder { get; set; }
         public ChatMessage(){}
-
-        public ChatMessage(string personName, string message, DateTime messageTime)
-        {
-            PersonName = personName;
-            Message = message;
-            MessageTime = messageTime;
-        }
-        public ChatMessage(string personName, DateTime messageTime, DateTime systemTime, string message)
-        {
-            PersonName = personName;
-            MessageTime = messageTime;
-            SystemTime = systemTime;
-            Message = message;
-        }
         public ChatMessage(string personName, DateTime messageTime, DateTime systemTime, string message, int entityId)
         {
             PersonName = personName;

@@ -9,8 +9,8 @@ services:
             context: .
             dockerfile: DockerfileAPI
         environment:
-            - ConnectionString=Server=db;Database=whatsapp;User Id=whatsapp;Password=whatsappmonitor
-            - WhatsappDate=dd/MM/yyyy HH:mm
+            - ConnectionStrings:DefaultConnection=Server=db;Database=whatsapp;User Id=whatsapp;Password=whatsappmonitor
+            - AppData:WhatsappDate=dd/MM/yyyy HH:mm
         depends_on: 
             - db
     # WhatsappDate must be changed to use your own .txt date 

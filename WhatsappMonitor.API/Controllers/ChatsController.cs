@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using WhatsappMonitor.Shared.Models;
 using WhatsappMonitor.API.Context;
 using WhatsappMonitor.API.Services;
+using Microsoft.Extensions.Configuration;
 
 namespace WhatsappMonitor.API.Controllers
 {
@@ -12,10 +13,12 @@ namespace WhatsappMonitor.API.Controllers
     [ApiController]
     public class ChatsController : Controller
     {
-        private readonly IChatsMessageService _repo;
-        public ChatsController(MyDbContext chat)
+        private readonly ChatsMessageService _repo;
+        private readonly IConfiguration _conf;
+        public ChatsController(MyDbContext chat, IConfiguration conf)
         {
-            this._repo = new ChatsMessageService(chat);
+            _conf = conf;
+            this._repo = new ChatsMessageService(chat, _conf);
         }
 
         [HttpGet("load/{id}/{skip}/{take}")]
@@ -34,9 +37,9 @@ namespace WhatsappMonitor.API.Controllers
         public async Task<ActionResult<List<ChatMessage>>> GetChatsBefore(int id, [FromQuery] string date)
         {
             return await _repo.GetChatsBefore(id, date);
-        }   
+        }
 
-         [HttpGet("first-message/{id}")]
+        [HttpGet("first-message/{id}")]
         public async Task<ActionResult<List<ChatMessage>>> GetFirstMessage(int id)
         {
             return await _repo.GetFirstMessage(id);
@@ -46,7 +49,7 @@ namespace WhatsappMonitor.API.Controllers
         public async Task<ActionResult<List<ChatMessage>>> GetLastMessage(int id)
         {
             return await _repo.GetLastMessage(id);
-        }       
+        }
 
         [HttpGet("search/{id}/{message}")]
         public async Task<ActionResult<List<ChatMessage>>> SearchChat(int id, string message)

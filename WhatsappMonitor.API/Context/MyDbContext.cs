@@ -9,16 +9,14 @@ namespace WhatsappMonitor.API.Context
 {
     public class MyDbContext : DbContext
     {
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        public MyDbContext(DbContextOptions<MyDbContext> options) : base(options)
         {
-            string dbString = Environment.GetEnvironmentVariable("ConnectionString");
-
-            optionsBuilder.UseNpgsql(dbString);
-            base.OnConfiguring(optionsBuilder);
+            StartDbContext.StartDb(this);
         }
 
         protected override void OnModelCreating(ModelBuilder modelbuilder)
         {
+
             modelbuilder.Entity<Folder>().ToTable("Folder");
             modelbuilder.Entity<Folder>(entity =>
             {

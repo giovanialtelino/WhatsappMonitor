@@ -9,17 +9,7 @@ using System.IO;
 
 namespace WhatsappMonitor.API.Services
 {
-    public interface IFoldersService
-    {
-        Task<List<Folder>> GetAllEntitiesAsync();
-        Task<Folder> GetEntityById(int id);
-        Task UpdateEntity(int id, Folder Folder);
-        Task AddEntity(Folder Folder);
-        Task DeleteEntity(int id);
-        Task UploadFile(int FolderId, DateTime uploadTime, string fileName, byte[] fileContent);
-    }
-    
-    public class FoldersService : IFoldersService
+    public class FoldersService
     {
         private readonly MyDbContext _context;
         public FoldersService(MyDbContext context)
@@ -34,7 +24,10 @@ namespace WhatsappMonitor.API.Services
             {
                 return false;
             }
-            return true;
+            else
+            {
+                return true;
+            }
         }
 
         public async Task<List<Folder>> GetAllEntitiesAsync()

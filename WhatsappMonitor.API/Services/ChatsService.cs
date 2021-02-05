@@ -9,41 +9,31 @@ using System;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Configuration;
+using WhatsappMonitor.API.Helper;
 
 namespace WhatsappMonitor.API.Services
 {
-    public interface IChatsMessageService
-    {
-        Task<Tuple<PaginationDTO, List<ChatMessage>>> GetAllChatsPagination(int id, int pagination, int take);
-        Task<List<ChatMessage>> GetChatsAfter(int id, string last);
-        Task<List<ChatMessage>> GetChatsBefore(int id, string first);
-        Task<List<ChatMessage>> GetFirstMessage(int id);
-        Task<List<ChatMessage>> GetLastMessage(int id);
-        Task<List<ChatMessage>> SearchEntityChatTextByDate(int id, string date);
-        Task<List<ChatMessage>> SearchEntityChatText(string text, int id);
-        Task<List<ParticipantDTO>> GetChatParticipants(int id);
-        Task<List<ParticipantDTO>> UpdateParticipantsChat(int FolderId, List<ParticipantDTO> participants);
-        Task<List<ChatUploadDTO>> GetChatUploadDate(int id);
-        Task DeleteDateChat(int FolderId, ChatUploadDTO dto);
-        Task ProcessEntityFiles();
-    }
-
-    public class ChatsMessageService : IChatsMessageService
+    public class ChatsMessageService
     {
         private readonly MyDbContext _context;
-        public ChatsMessageService(MyDbContext context)
+        private readonly IConfiguration _conf;
+        public ChatsMessageService(MyDbContext context, IConfiguration conf)
         {
             _context = context;
+            _conf = conf;
         }
-
-        private static string WhatsappDate = Environment.GetEnvironmentVariable("WhatsappDate");
 
         public async Task<List<ChatMessage>> SearchEntityChatTextByDate(int id, string date)
         {
+            //jump the chat to a specific date, if it exists, in a 70 day gap
             var moved = 0;
             var initialDate = DateTime.Parse(date);
             var parsedDate = initialDate;
-            var chatMessage = await _context.Chats.Where(c => c.FolderId == id).OrderByDescending(c => c.MessageTime).ToListAsync();
+            var chatMessage = await _context.Chats
+            .Where(c => c.FolderId == id)
+            .OrderByDescending(c => c.MessageTime)
+            .ToListAsync();
 
             int? index = null;
             while (index == null)
@@ -55,6 +45,7 @@ namespace WhatsappMonitor.API.Services
                 }
                 else
                 {
+                    //number or runs of the loop
                     moved++;
                     if (moved < 35)
                     {
@@ -69,7 +60,7 @@ namespace WhatsappMonitor.API.Services
                     {
                         parsedDate = parsedDate.AddDays(-1);
                     }
-                    else if(moved == 70)
+                    else if (moved == 70)
                     {
                         return await GetLastMessage(id);
                     }
@@ -86,6 +77,7 @@ namespace WhatsappMonitor.API.Services
 
             return chatMessage.TakeLast(200).ToList();
         }
+
         public async Task<List<ChatMessage>> GetChatsBefore(int id, string first)
         {
             var parsedDate = DateTime.Parse(first);
@@ -110,9 +102,7 @@ namespace WhatsappMonitor.API.Services
         {
             var cleanTake = 200;
             var cleanSkip = 0;
-            //if (skip >= 0) cleanSkip = skip;
-            //if (take >= 0 && take <= 100) cleanTake = take;
-
+           
             var ChatMessage = await _context.Chats.Where(c => c.FolderId == id).OrderByDescending(c => c.MessageTime).ToListAsync();
 
             var result = ChatMessage.Skip(cleanSkip).Take(cleanTake).ToList();
@@ -131,23 +121,10 @@ namespace WhatsappMonitor.API.Services
             return new Tuple<PaginationDTO, List<ChatMessage>>(paginationDto, result);
         }
 
-        private List<ChatMessage> SearchChatText(string text, List<ChatMessage> messages)
-        {
-            var listChat = new List<ChatMessage>();
-            foreach (var item in messages)
-            {
-                var lowText = text.ToLower();
-                if (item.Message.ToLower().Contains(lowText))
-                {
-                    listChat.Add(item);
-                }
-            }
-            return listChat;
-        }
         public async Task<List<ChatMessage>> SearchEntityChatText(string text, int id)
         {
             var messages = await _context.Chats.Where(c => c.FolderId == id).OrderByDescending(c => c.MessageTime).ToListAsync();
-            var findText = SearchChatText(text, messages);
+            var findText = DefaultHelper.SearchChatText(text, messages);
             return findText;
         }
 
@@ -158,8 +135,12 @@ namespace WhatsappMonitor.API.Services
             var totalWords = 0;
 
             //bring everything already grouped by user
-            var participantsStep1 = await _context.Chats.Where(c => c.FolderId == id).ToListAsync();
-            var participants = participantsStep1.GroupBy(c => c.PersonName);
+            var participantsStep1 = await _context.Chats
+            .Where(c => c.FolderId == id)
+            .ToListAsync();
+
+            var participants = participantsStep1
+            .GroupBy(c => c.PersonName);
 
             foreach (var participant in participants)
             {
@@ -202,8 +183,8 @@ namespace WhatsappMonitor.API.Services
                 item.PersonName = newName;
             }
             await _context.SaveChangesAsync();
-
         }
+
         private async Task DeleteNameChat(int FolderId, string name)
         {
             var toDelete = await _context.Chats.Where(c => c.FolderId == FolderId && c.PersonName == name).ToListAsync();
@@ -214,7 +195,7 @@ namespace WhatsappMonitor.API.Services
 
         public async Task<List<ParticipantDTO>> UpdateParticipantsChat(int FolderId, List<ParticipantDTO> participants)
         {
-            //check for differentes and deletions, deletions have priority over updates
+            //check for differences and deletions, deletions have priority over updates
             foreach (var item in participants)
             {
                 if (item.ToDelete == false && item.PersonName != item.NewName && !String.IsNullOrWhiteSpace(item.NewName))
@@ -259,89 +240,15 @@ namespace WhatsappMonitor.API.Services
             await _context.SaveChangesAsync();
         }
 
-        private async Task<ChatInfoDate> CheckDates(string from, string until)
-        {
-            if (!String.IsNullOrWhiteSpace(from) && !String.IsNullOrWhiteSpace(until))
-            {
-                return new ChatInfoDate { From = DateTime.Parse(from), Until = DateTime.Parse(until) };
-            }
-            else
-            {
-                var fromMin = await _context.Chats.MinAsync(c => c.MessageTime);
-                var untilMax = await _context.Chats.MaxAsync(c => c.MessageTime);
-                var startToFinish = new ChatInfoDate { From = fromMin, Until = untilMax };
-                return startToFinish;
-            }
-        }
-
-        private DateTime? ValidDate(string line)
-        {
-            var start = 0;
-            var datePosition = line.IndexOf('-', start);
-            if (datePosition != -1)
-            {
-                var temp = line.Substring(start, datePosition - start + 1).Trim();
-
-                if (temp.Length < 6) return null;
-
-                var dateString = temp.Remove(temp.Length - 2);
-                var parsedDate = new DateTime();
-
-                if (DateTime.TryParseExact(dateString, WhatsappDate,  CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedDate))
-                {
-                    return parsedDate;
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            else
-            {
-                return null;
-            }
-        }
-        private String ValidSender(string line)
-        {
-            var start = 0;
-            var datePosition = line.IndexOf('-', start);
-            var valueAfterDate = line.Substring(datePosition - start + 1).Trim();
-            var namePosition = valueAfterDate.IndexOf(':', start);
-            if (namePosition != -1)
-            {
-                var temp = valueAfterDate.Substring(start, namePosition - start + 1).Trim();
-                return temp.Remove(temp.Length - 1);
-            }
-            else
-            {
-                return "";
-            }
-        }
-        private String CleanMessage(string line)
-        {
-            var start = 0;
-            var datePosition = line.IndexOf('-', start);
-            var valueAfterDate = line.Substring(datePosition - start + 1).Trim();
-            var namePosition = valueAfterDate.IndexOf(':', start);
-            var valueAfterName = valueAfterDate.Substring(namePosition - start + 1).Trim();
-
-            if (!((valueAfterName.StartsWith("<")) && (valueAfterName.EndsWith(">"))))
-            {
-                return valueAfterName;
-            }
-            else
-            {
-                return "";
-            }
-        }
+       
         private static SemaphoreSlim semaphore;
         private async Task ProcessTxt(Upload file)
         {
-
+            string WhatsappDate = _conf["WhatsappDate"];
             var systemTime = DateTime.Now;
             var chatList = new List<ChatMessage>();
             var toString = Encoding.UTF8.GetString(file.FileContent);
-            var entityChat = await _context.Chats.Where(c => c.FolderId == file.FolderId).Select(c => new Tuple<string,string, DateTime>(c.Message, c.PersonName, c.MessageTime)).ToListAsync();
+            var entityChat = await _context.Chats.Where(c => c.FolderId == file.FolderId).Select(c => new Tuple<string, string, DateTime>(c.Message, c.PersonName, c.MessageTime)).ToListAsync();
             var hashSet = new HashSet<Tuple<string, string, DateTime>>(entityChat);
 
             string[] lines = toString.Split(
@@ -352,15 +259,15 @@ namespace WhatsappMonitor.API.Services
             //not a fan of this approach
             var linesCounter = lines.Count() - 1;
 
-            var messageDate = ValidDate(lines[0]);
-            var messageSender = ValidSender(lines[0]);
-            var messageText = CleanMessage(lines[0]);
+            var messageDate = DefaultHelper.ValidDate(lines[0], WhatsappDate);
+            var messageSender = DefaultHelper.ValidSender(lines[0]);
+            var messageText = DefaultHelper.CleanMessage(lines[0]);
 
             for (int i = 0; i < linesCounter; i++)
             {
-                var date = ValidDate(lines[i]);
-                var sender = ValidSender(lines[i]);
-                var message = CleanMessage(lines[i]);
+                var date = DefaultHelper.ValidDate(lines[i], WhatsappDate);
+                var sender = DefaultHelper.ValidSender(lines[i]);
+                var message = DefaultHelper.CleanMessage(lines[i]);
 
                 if (date != null)
                 {
